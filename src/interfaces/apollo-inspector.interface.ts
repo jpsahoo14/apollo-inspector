@@ -5,6 +5,8 @@ import {
   OperationVariables,
 } from "@apollo/client";
 import { IQueryInfo } from "./apollo-client.interface";
+import { IApolloInspectorState } from "./apollo-inspector-debug-interfaces";
+
 export enum DebugState {
   Initial,
   StartedRecording,
@@ -203,3 +205,4 @@ export interface IInspectorTrackingConfig {
   trackVerboseOperations?: boolean;
   trackAllOperations?: boolean;
 }
+

@@ -5,10 +5,14 @@ import {
   IApolloOperation,
   IAllOperations,
   IVerboseOperationMap,
+  IDataSetters,
+  ISetCacheOperations,
+  ISetAllOperations,
+  ISetVerboseOperations,
 } from "./interfaces";
 import { recordOnlyWriteToCacheOperations } from "./recording";
 
-export const initializeRawData = () => {
+export const initializeRawData = (): IDataSetters => {
   const rawData = {
     operations: [],
     verboseOperationsMap: new Map(),
@@ -30,7 +34,9 @@ export const initializeRawData = () => {
   };
 };
 
-const getSetCacheOperations = (rawData: IApolloInspectorState) => {
+const getSetCacheOperations = (
+  rawData: IApolloInspectorState
+): ISetCacheOperations => {
   return (
     updateData: ((state: IApolloOperation[]) => void) | IApolloOperation[]
   ) => {
@@ -42,7 +48,9 @@ const getSetCacheOperations = (rawData: IApolloInspectorState) => {
   };
 };
 
-const getSetAllOperations = (rawData: IApolloInspectorState) => {
+const getSetAllOperations = (
+  rawData: IApolloInspectorState
+): ISetAllOperations => {
   return (updateData: ((state: IAllOperations) => void) | IAllOperations) => {
     if (typeof updateData === "function") {
       updateData(rawData.allOperations);
@@ -52,7 +60,9 @@ const getSetAllOperations = (rawData: IApolloInspectorState) => {
   };
 };
 
-const getSetVerboseOperations = (rawData: IApolloInspectorState) => {
+const getSetVerboseOperations = (
+  rawData: IApolloInspectorState
+): ISetVerboseOperations => {
   return (
     updateData: ((state: IVerboseOperationMap) => void) | IVerboseOperationMap
   ) => {
@@ -71,7 +81,7 @@ export const startRecordingInternal = ({
 }: {
   client: ApolloClient<InMemoryCache>;
   config: IInspectorTrackingConfig;
-  dataSetters: any;
+  dataSetters: IDataSetters;
 }) => {
   const cleanups: (() => void)[] = [];
   if (config.trackCacheOperation) {

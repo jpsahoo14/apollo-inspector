@@ -1,5 +1,5 @@
 import { ApolloClient, InMemoryCache } from "@apollo/client";
-import { IInspectorTrackingConfig } from "./interfaces";
+import { IInspectorTrackingConfig, IDataSetters } from "./interfaces";
 import { defaultConfig } from "./apollo-inspector-utils";
 import { extractOperations } from "./extract-operations";
 import {
@@ -20,7 +20,7 @@ export class ApolloInspector {
       config = defaultConfig;
     }
     this.setRecording(true);
-    const dataSetters = initializeRawData();
+    const dataSetters: IDataSetters = initializeRawData();
 
     const cleanUps = startRecordingInternal({
       client: this.client,
