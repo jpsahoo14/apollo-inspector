@@ -10,7 +10,11 @@ import {
   ISetAllOperations,
   ISetVerboseOperations,
 } from "./interfaces";
-import { recordOnlyWriteToCacheOperations } from "./recording";
+import {
+  recordOnlyWriteToCacheOperations,
+  recordAllOperations,
+  recordVerboseOperations,
+} from "./recording";
 
 export const initializeRawData = (): IDataSetters => {
   const rawData = {
@@ -91,6 +95,21 @@ export const startRecordingInternal = ({
     );
     cleanups.push(cleanUpWriteToCache);
   }
+
+  if (config.trackAllOperations) {
+    const cleanUpAllOperation = recordAllOperations(
+      client,
+      dataSetters.setAllOperations
+    );
+    cleanups.push(cleanUpAllOperation);
+  }
+
+  const cleanUpVerboseOperations = recordVerboseOperations(
+    client,
+    dataSetters.setVerboseOperations,
+    dataSetters.getRawData()
+  );
+  cleanups.push(cleanUpVerboseOperations);
 
   return cleanups;
 };

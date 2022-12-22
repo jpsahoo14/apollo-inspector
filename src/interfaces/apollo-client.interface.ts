@@ -20,6 +20,8 @@ export interface IMissing {
 
 export interface IApolloClient {
   queryManager: IQueryManager;
+  mutate: () => void;
+  watchQuery: () => void;
 }
 export interface IQueryManager {
   queries: Map<string, IQueryInfo>;
@@ -28,12 +30,14 @@ export interface IQueryManager {
     DocumentNode,
     Map<string, Observable<FetchResult>>
   >;
-  fetchQueryObservable: (
-    ...args: IFetchQueryObservableParams
-  ) => Observable<unknown>;
+  fetchQueryObservable: IFetchQueryObservable;
   getQuery: (queryId: number) => unknown;
   fetchQueryByPolicy: (...args: IFetchQueryByPolicy) => unknown;
 }
+
+export type IFetchQueryObservable = (
+  ...args: IFetchQueryObservableParams
+) => Observable<unknown>;
 
 export type IFetchQueryByPolicy = [IQueryInfo, IFetchQueryByPolicyOptions];
 
