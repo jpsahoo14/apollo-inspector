@@ -9,9 +9,9 @@ export const recordOnlyWriteToCacheOperations = (
   const cache = client.cache;
   const originalFn = cache.write;
 
-  cache.write = function override(...args: [IApolloOperation]) {
+  cache.write = function override(...args) {
     setApolloOperations((data) => {
-      data.push(cloneDeep(args[0]));
+      data.push(cloneDeep(args[0] as IApolloOperation));
       return data;
     });
     const result = originalFn.apply(this, args);
