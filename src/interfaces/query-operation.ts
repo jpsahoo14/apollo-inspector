@@ -173,19 +173,15 @@ export class QueryOperation extends IDebugOperation {
       duration: {
         totalTime: this.getTotalExecutionTime(),
         cacheWriteTime: this.getCacheWriteTime(),
-        resolverTime: this.getResolverTime(),
+        requestExecutionTime: this.getResolverTime(),
         cacheDiffTime: this.getCacheDiffTime(),
         cacheBroadcastWatchesTime: this.getCacheBroadcastWatchesTime(),
-        windowToWorkerIpcTime: this.getWindowToWorkerIpcTime(),
-        workerToWindowIpcTime: this.getWorkerToWindowIpcTime(),
-        ipcTime: this.getIpcTime(),
-        timeSpentInWorker: this.getTimeSpentInWorker(),
       },
     };
   }
 
   private doesOperationExist(opStage: OperationStage) {
-    const result = this._operationStages.find(op => op === opStage);
+    const result = this._operationStages.find((op) => op === opStage);
     if (result === undefined) {
       // debugger;
       return false;
@@ -197,7 +193,7 @@ export class QueryOperation extends IDebugOperation {
   private getWarning() {
     if (this.diff && !this.diff.complete) {
       const msgs: unknown[] = [];
-      this.diff.missing.forEach(m => {
+      this.diff.missing.forEach((m) => {
         msgs.push({ message: m.message, path: m.path });
       });
 
@@ -279,75 +275,4 @@ export class QueryOperation extends IDebugOperation {
 
     return this.duration.totalCacheBroadcastWatchesTime || Not_Available;
   };
-
-  private getWindowToWorkerIpcTime = () => {
-    if (!this.duration.totalWindowToWorkerIpcTime) {
-      if (
-        this.duration.ipcTime.workerToWindowRequestReceiveTime &&
-        this.duration.ipcTime.windowToWorkerRequestSendTime
-      ) {
-        const value =
-          this.duration.ipcTime.workerToWindowRequestReceiveTime -
-          this.duration.ipcTime.windowToWorkerRequestSendTime;
-        if (!isNaN(value)) {
-          this.duration.totalWindowToWorkerIpcTime = parseFloat(
-            value.toFixed(this.decimalNumber)
-          );
-        }
-      }
-    }
-    return this.duration.totalWindowToWorkerIpcTime || Not_Available;
-  };
-
-  private getWorkerToWindowIpcTime = () => {
-    if (!this.duration.totalWorkerToWindowIpcTime) {
-      if (
-        this.duration.ipcTime.windowToWorkerRequestReceviedTime &&
-        this.duration.ipcTime.workerToWindowRequestSendTime
-      ) {
-        const value =
-          this.duration.ipcTime.windowToWorkerRequestReceviedTime -
-          this.duration.ipcTime.workerToWindowRequestSendTime;
-        if (!isNaN(value)) {
-          this.duration.totalWorkerToWindowIpcTime = parseFloat(
-            value.toFixed(this.decimalNumber)
-          );
-        }
-      }
-    }
-    return this.duration.totalWorkerToWindowIpcTime || Not_Available;
-  };
-
-  private getIpcTime = () => {
-    if (!this.duration.totalIPCTime) {
-      if (
-        this.duration.linkNextExecutionTime[0] &&
-        this.duration.linkEnterTime &&
-        this.duration.ipcTime.workerResponseTime
-      ) {
-        const value =
-          this.duration.linkNextExecutionTime[0] -
-          this.duration.linkEnterTime -
-          this.duration.ipcTime.workerResponseTime;
-        if (!isNaN(value)) {
-          this.duration.totalIPCTime = parseFloat(
-            value.toFixed(this.decimalNumber)
-          );
-        }
-      }
-    }
-    return this.duration.totalIPCTime || Not_Available;
-  };
-
-  private getTimeSpentInWorker() {
-    if (!this.duration.totalTimeSpentInWorker) {
-      const value = this.duration.ipcTime.workerResponseTime;
-      if (value && !isNaN(value)) {
-        this.duration.totalTimeSpentInWorker = parseFloat(
-          value.toFixed(this.decimalNumber)
-        );
-      }
-    }
-    return this.duration.totalTimeSpentInWorker || Not_Available;
-  }
 }

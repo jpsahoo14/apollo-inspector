@@ -55,16 +55,11 @@ export interface IDebugOperationDuration {
   cacheDiffEnd?: DOMHighResTimeStamp;
   cacheBroadcastWatchesStart?: DOMHighResTimeStamp;
   cacheBroadcastWatchesEnd?: DOMHighResTimeStamp;
-  ipcTime: IIPCTime;
   totalExecutionTime?: DOMHighResTimeStamp;
   totalResovlerTime?: DOMHighResTimeStamp;
   totalCacheWriteTime?: DOMHighResTimeStamp;
   totalCacheDiffTime?: DOMHighResTimeStamp;
   totalCacheBroadcastWatchesTime?: DOMHighResTimeStamp;
-  totalWindowToWorkerIpcTime?: DOMHighResTimeStamp;
-  totalWorkerToWindowIpcTime?: DOMHighResTimeStamp;
-  totalIPCTime?: DOMHighResTimeStamp;
-  totalTimeSpentInWorker?: DOMHighResTimeStamp;
 }
 
 export interface IIPCTime {
@@ -154,14 +149,10 @@ export interface IVerboseOperation {
 
 export interface IVerboseOperationDuration {
   totalTime: DOMHighResTimeStamp | string;
-  resolverTime: DOMHighResTimeStamp | string;
+  requestExecutionTime: DOMHighResTimeStamp | string;
   cacheWriteTime: DOMHighResTimeStamp | string;
   cacheDiffTime: DOMHighResTimeStamp | string;
   cacheBroadcastWatchesTime: DOMHighResTimeStamp | string;
-  windowToWorkerIpcTime: DOMHighResTimeStamp | string;
-  workerToWindowIpcTime: DOMHighResTimeStamp | string;
-  ipcTime: DOMHighResTimeStamp | string;
-  timeSpentInWorker: DOMHighResTimeStamp | string;
 }
 export interface IOperationResult {
   from: ResultsFrom;
@@ -205,4 +196,3 @@ export interface IInspectorTrackingConfig {
   trackVerboseOperations?: boolean;
   trackAllOperations?: boolean;
 }
-
