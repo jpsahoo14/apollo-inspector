@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
@@ -8,14 +8,17 @@ import {
   overrideFetchQueryByPolicy,
   overrideFetchQueryObservable,
   overrideQueryInfoMarkResult,
+  overrideCacheBroadcastWatches,
+  overrideCacheDiff,
+  overrideCacheWrite,
 } from "./record-verbose-operation";
 
 export const recordVerboseOperations = (
-  client: ApolloClient<InMemoryCache>,
+  client: ApolloClient<NormalizedCacheObject>,
   setVerboseApolloOperations: ISetVerboseApolloOperations,
   rawData: IApolloInspectorState
 ) => {
-  const selectedApolloClient: ApolloClient<InMemoryCache> = client;
+  const selectedApolloClient: ApolloClient<NormalizedCacheObject> = client;
 
   const revertSetTrackLink = setTrackLink(
     selectedApolloClient,
@@ -40,10 +43,29 @@ export const recordVerboseOperations = (
     setVerboseApolloOperations
   );
 
+  const revertCacheBroadcastWatches = overrideCacheBroadcastWatches(
+    selectedApolloClient,
+    rawData,
+    setVerboseApolloOperations
+  );
+  const revertCacheDiff = overrideCacheDiff(
+    selectedApolloClient,
+    rawData,
+    setVerboseApolloOperations
+  );
+  const revertCacheWrite = overrideCacheWrite(
+    selectedApolloClient,
+    rawData,
+    setVerboseApolloOperations
+  );
+
   return () => {
     revertSetTrackLink();
     revertFetchQueryObservable();
     revertMarkResult();
     revertFetchQueryByPolicy();
+    revertCacheBroadcastWatches();
+    revertCacheDiff();
+    revertCacheWrite();
   };
 };

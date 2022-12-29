@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import { IInspectorTrackingConfig, IDataSetters } from "./interfaces";
 import { defaultConfig } from "./apollo-inspector-utils";
 import { extractOperations } from "./extract-operations";
@@ -9,7 +9,7 @@ import {
 
 export class ApolloInspector {
   private isRecording = false;
-  constructor(private client: ApolloClient<InMemoryCache>) {}
+  constructor(private client: ApolloClient<NormalizedCacheObject>) {}
 
   public startTracking(config?: IInspectorTrackingConfig) {
     if (this.isRecording == true) {

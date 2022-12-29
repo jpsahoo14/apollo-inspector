@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import {
   IInspectorTrackingConfig,
   IApolloInspectorState,
@@ -83,7 +83,7 @@ export const startRecordingInternal = ({
   config,
   dataSetters,
 }: {
-  client: ApolloClient<InMemoryCache>;
+  client: ApolloClient<NormalizedCacheObject>;
   config: IInspectorTrackingConfig;
   dataSetters: IDataSetters;
 }) => {

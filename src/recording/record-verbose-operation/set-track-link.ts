@@ -1,7 +1,7 @@
 import {
   ApolloClient,
   ApolloLink,
-  InMemoryCache,
+  NormalizedCacheObject,
   Observable,
   FetchResult,
 } from "@apollo/client";
@@ -14,7 +14,7 @@ import {
 } from "../../interfaces";
 
 export const setTrackLink = (
-  apolloClient: ApolloClient<InMemoryCache>,
+  apolloClient: ApolloClient<NormalizedCacheObject>,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {

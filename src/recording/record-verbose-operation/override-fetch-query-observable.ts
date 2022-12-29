@@ -1,6 +1,6 @@
 import {
   ApolloClient,
-  InMemoryCache,
+  NormalizedCacheObject,
   ErrorPolicy,
   Observable,
 } from "@apollo/client";
@@ -15,7 +15,7 @@ import {
 } from "../../interfaces";
 
 export const overrideFetchQueryObservable = (
-  apolloClient: ApolloClient<InMemoryCache>,
+  apolloClient: ApolloClient<NormalizedCacheObject>,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {

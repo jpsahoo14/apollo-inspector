@@ -9,7 +9,7 @@ import {
   ApolloClient,
   OperationVariables,
   Observable,
-  InMemoryCache,
+  NormalizedCacheObject,
   DefaultContext,
   MutationOptions,
   FetchResult,
@@ -19,7 +19,7 @@ import { cloneDeep } from "lodash";
 type INextParams = [{ data: unknown }];
 
 export const recordAllOperations = (
-  client: ApolloClient<InMemoryCache>,
+  client: ApolloClient<NormalizedCacheObject>,
   setAllApolloOperations: ISetAllApolloOperations
 ) => {
   const cleanUpFetchQueryObservable = trackFetchQueryObservable(
@@ -36,7 +36,7 @@ export const recordAllOperations = (
 };
 
 const trackFetchQueryObservable = (
-  client: ApolloClient<InMemoryCache>,
+  client: ApolloClient<NormalizedCacheObject>,
   setAllApolloOperations: ISetAllApolloOperations
 ) => {
   let nextCount = 0;
@@ -104,7 +104,7 @@ const trackFetchQueryObservable = (
 };
 
 const trackClientMutateFn = (
-  client: ApolloClient<InMemoryCache>,
+  client: ApolloClient<NormalizedCacheObject>,
   setAllApolloOperations: ISetAllApolloOperations
 ) => {
   let lastPromise: Promise<unknown> | undefined;
