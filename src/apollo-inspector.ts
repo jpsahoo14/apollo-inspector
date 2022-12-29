@@ -11,7 +11,7 @@ export class ApolloInspector {
   private isRecording = false;
   constructor(private client: ApolloClient<InMemoryCache>) {}
 
-  public startTracking(config: IInspectorTrackingConfig | undefined) {
+  public startTracking(config?: IInspectorTrackingConfig) {
     if (this.isRecording == true) {
       throw new Error("Recording already in progress");
     }
