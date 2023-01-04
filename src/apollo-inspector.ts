@@ -1,5 +1,9 @@
 import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
-import { IInspectorTrackingConfig, IDataSetters } from "./interfaces";
+import {
+  IInspectorTrackingConfig,
+  IDataSetters,
+  IStopTracking,
+} from "./interfaces";
 import { defaultConfig } from "./apollo-inspector-utils";
 import { extractOperations } from "./extract-operations";
 import {
@@ -11,7 +15,7 @@ export class ApolloInspector {
   private isRecording = false;
   constructor(private client: ApolloClient<NormalizedCacheObject>) {}
 
-  public startTracking(config?: IInspectorTrackingConfig) {
+  public startTracking(config?: IInspectorTrackingConfig): IStopTracking {
     if (this.isRecording == true) {
       throw new Error("Recording already in progress");
     }

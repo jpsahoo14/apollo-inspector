@@ -61,7 +61,7 @@ export const overrideFetchQueryObservable = (
                 rawData.queryInfoToOperationId.get(queryInfo)?.id
               } currentOperationId:${nextId} queryId:${queryId} `
             );
-          // debugger;
+          debugger;
         }
         rawData.queryInfoToOperationId.set(queryInfo, debugOp);
       });

@@ -5,3 +5,6 @@ export * from "./override-query-info-mark-result";
 export * from "./override-cache-broadcast-watches";
 export * from "./override-cache-diff";
 export * from "./override-cache-write";
+export * from "./override-mutate";
+export * from "./override-mark-mutation-result";
+export * from "./override-get-observable-from-link";

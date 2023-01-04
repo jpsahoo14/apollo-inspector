@@ -28,6 +28,7 @@ export const initializeRawData = (): IDataSetters => {
     operationIdCounter: 0,
     enableDebug: false,
   };
+  (window as any).rawData = rawData;
   const getRawData = () => rawData;
 
   return {

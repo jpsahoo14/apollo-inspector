@@ -5,7 +5,6 @@ import {
   OperationVariables,
 } from "@apollo/client";
 import { IQueryInfo } from "./apollo-client.interface";
-import { IApolloInspectorState } from "./apollo-inspector-debug-interfaces";
 
 export enum DebugState {
   Initial,
@@ -33,6 +32,7 @@ export enum OperationStage {
   cacheDiff = "cacheDiff",
   cacheBroadcastWatches = "cacheBroadcastWatches",
   linkCompleteExecution = "linkCompleteExecution",
+  mutate = "mutate",
 }
 
 export enum ResultsFrom {
@@ -69,10 +69,6 @@ export interface IIPCTime {
   workerToWindowRequestReceiveTime?: DOMHighResTimeStamp;
   workerResponseTime?: DOMHighResTimeStamp;
 }
-
-export const ONE = 1;
-export const TWO = 2;
-export const THREE = 3;
 
 export type ISetApolloOperations = (
   updateData: IApolloOperation[] | ((state: IApolloOperation[]) => void)
@@ -196,3 +192,5 @@ export interface IInspectorTrackingConfig {
   trackVerboseOperations?: boolean;
   trackAllOperations?: boolean;
 }
+
+export type IStopTracking = () => IDataView;

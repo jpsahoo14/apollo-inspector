@@ -11,6 +11,9 @@ import {
   overrideCacheBroadcastWatches,
   overrideCacheDiff,
   overrideCacheWrite,
+  overrideMutate,
+  overrideMarkMutationResult,
+  overrideGetObservableFromLink,
 } from "./record-verbose-operation";
 
 export const recordVerboseOperations = (
@@ -20,52 +23,30 @@ export const recordVerboseOperations = (
 ) => {
   const selectedApolloClient: ApolloClient<NormalizedCacheObject> = client;
 
-  const revertSetTrackLink = setTrackLink(
-    selectedApolloClient,
-    rawData,
-    setVerboseApolloOperations
-  );
-
-  const revertFetchQueryObservable = overrideFetchQueryObservable(
-    selectedApolloClient,
-    rawData,
-    setVerboseApolloOperations
-  );
-  const revertMarkResult = overrideQueryInfoMarkResult(
-    selectedApolloClient,
-    rawData,
-    setVerboseApolloOperations
-  );
-
-  const revertFetchQueryByPolicy = overrideFetchQueryByPolicy(
-    selectedApolloClient,
-    rawData,
-    setVerboseApolloOperations
-  );
-
-  const revertCacheBroadcastWatches = overrideCacheBroadcastWatches(
-    selectedApolloClient,
-    rawData,
-    setVerboseApolloOperations
-  );
-  const revertCacheDiff = overrideCacheDiff(
-    selectedApolloClient,
-    rawData,
-    setVerboseApolloOperations
-  );
-  const revertCacheWrite = overrideCacheWrite(
-    selectedApolloClient,
-    rawData,
-    setVerboseApolloOperations
-  );
+  const methods = [
+    setTrackLink,
+    overrideFetchQueryObservable,
+    overrideQueryInfoMarkResult,
+    overrideFetchQueryByPolicy,
+    overrideCacheBroadcastWatches,
+    overrideCacheDiff,
+    overrideCacheWrite,
+    overrideMutate,
+    overrideMarkMutationResult,
+    overrideGetObservableFromLink,
+  ];
+  const revertMethods: (() => void)[] = [];
+  methods.forEach((m) => {
+    const revertFun = m.call(
+      null,
+      selectedApolloClient,
+      rawData,
+      setVerboseApolloOperations
+    );
+    revertMethods.push(revertFun);
+  });
 
   return () => {
-    revertSetTrackLink();
-    revertFetchQueryObservable();
-    revertMarkResult();
-    revertFetchQueryByPolicy();
-    revertCacheBroadcastWatches();
-    revertCacheDiff();
-    revertCacheWrite();
+    revertMethods.forEach((rm) => rm());
   };
 };
