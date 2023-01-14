@@ -198,7 +198,7 @@ export interface IInspectorTrackingConfig {
   hooks?: IHook[];
 }
 
-export interface IHook {
+export declare class IHook {
   getLink: (getOperationId: () => number) => ApolloLink;
   transform: (op: IVerboseOperation) => IVerboseOperation;
 }
