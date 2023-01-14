@@ -21,7 +21,8 @@ export const overrideMarkMutationResult = (
       const [mutation, cache] = args;
 
       const { result } = mutation;
-      const operationId = result.operationId;
+      const newResult = result as { operationId: number };
+      const operationId = newResult.operationId;
       setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
         const op = opMap.get(operationId) as QueryOperation | undefined;
         if (op) {

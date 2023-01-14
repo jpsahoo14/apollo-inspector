@@ -89,7 +89,7 @@ export const startRecordingInternal = ({
   dataSetters: IDataSetters;
 }) => {
   const cleanups: (() => void)[] = [];
-  if (config.trackCacheOperation) {
+  if (config.tracking.trackCacheOperation) {
     const cleanUpWriteToCache = recordOnlyWriteToCacheOperations(
       client,
       dataSetters.setCacheOperations
@@ -97,7 +97,7 @@ export const startRecordingInternal = ({
     cleanups.push(cleanUpWriteToCache);
   }
 
-  if (config.trackAllOperations) {
+  if (config.tracking.trackAllOperations) {
     const cleanUpAllOperation = recordAllOperations(
       client,
       dataSetters.setAllOperations
@@ -108,7 +108,8 @@ export const startRecordingInternal = ({
   const cleanUpVerboseOperations = recordVerboseOperations(
     client,
     dataSetters.setVerboseOperations,
-    dataSetters.getRawData()
+    dataSetters.getRawData(),
+    config
   );
   cleanups.push(cleanUpVerboseOperations);
 

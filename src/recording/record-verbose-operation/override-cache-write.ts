@@ -10,7 +10,7 @@ import {
 
 export const overrideCacheWrite = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
-  rawDataRef: IApolloInspectorState,
+  rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
   const cache = apolloClient.cache;
@@ -20,12 +20,12 @@ export const overrideCacheWrite = (
     const cacheWriteStart = performance.now();
     const result = originalWrite.apply(this, args);
     const cacheWriteEnd = performance.now();
-    const operationId = rawDataRef.currentOperationId;
-    rawDataRef.enableDebug &&
+    const operationId = rawData.currentOperationId;
+    rawData.enableDebug &&
       console.log(`APD operationId:${operationId} overrideCacheWrite`);
     if (operationId !== 0) {
-      setVerboseApolloOperations((op: IVerboseOperationMap) => {
-        const operation: QueryOperation | undefined = op.get(operationId) as
+      setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+        const operation: QueryOperation | undefined = opMap.get(operationId) as
           | QueryOperation
           | undefined;
 

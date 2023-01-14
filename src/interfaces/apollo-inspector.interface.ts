@@ -3,8 +3,10 @@ import {
   FetchPolicy,
   WatchQueryFetchPolicy,
   OperationVariables,
+  ApolloLink,
 } from "@apollo/client";
 import { IQueryInfo } from "./apollo-client.interface";
+import { IDebugOperation } from "./debug-operation";
 
 export enum DebugState {
   Initial,
@@ -188,9 +190,19 @@ export interface IAffectedQuery {
 }
 
 export interface IInspectorTrackingConfig {
-  trackCacheOperation?: boolean;
-  trackVerboseOperations?: boolean;
-  trackAllOperations?: boolean;
+  tracking: {
+    trackCacheOperation?: boolean;
+    trackVerboseOperations?: boolean;
+    trackAllOperations?: boolean;
+  };
+  hooks?: IHook[];
+}
+
+export interface IHook {
+  getLink: (
+    setOperation: (cb: (op: IDebugOperation) => IDebugOperation) => void
+  ) => ApolloLink;
+  transform: (op: IVerboseOperation) => IVerboseOperation;
 }
 
 export type IStopTracking = () => IDataView;

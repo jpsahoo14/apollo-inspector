@@ -36,5 +36,6 @@ export const copyToClipboard = async (obj: unknown) => {
 };
 
 export const defaultConfig: IInspectorTrackingConfig = {
-  trackVerboseOperations: true,
+  tracking: { trackVerboseOperations: true },
+  hooks: [],
 };

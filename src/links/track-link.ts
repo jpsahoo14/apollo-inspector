@@ -1,23 +1,16 @@
-import {
-  ApolloClient,
-  ApolloLink,
-  NormalizedCacheObject,
-  Observable,
-  FetchResult,
-} from "@apollo/client";
+import { ApolloLink, Observable, FetchResult } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   OperationStage,
   IVerboseOperationMap,
   QueryOperation,
-} from "../../interfaces";
+} from "../interfaces";
 
-export const setTrackLink = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+export const trackLink = (
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
-) => {
+): ApolloLink => {
   const map: { [key: string]: boolean } = {};
   const trackLink = new ApolloLink((operation, forward) => {
     const operationId = rawData.currentOperationId;
@@ -108,11 +101,6 @@ export const setTrackLink = (
       });
     });
   });
-  const currentLink = apolloClient.link;
-  const combinedLink = ApolloLink.concat(trackLink, currentLink);
-  apolloClient.setLink(combinedLink);
 
-  return () => {
-    apolloClient.setLink(currentLink);
-  };
+  return trackLink;
 };

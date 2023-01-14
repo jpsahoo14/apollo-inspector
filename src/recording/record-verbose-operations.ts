@@ -2,9 +2,10 @@ import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
+  IInspectorTrackingConfig,
+  IDebugOperation,
 } from "../interfaces";
 import {
-  setTrackLink,
   overrideFetchQueryByPolicy,
   overrideFetchQueryObservable,
   overrideQueryInfoMarkResult,
@@ -15,16 +16,17 @@ import {
   overrideMarkMutationResult,
   overrideGetObservableFromLink,
 } from "./record-verbose-operation";
+import { trackLink, setLinkInFront } from "../links";
 
 export const recordVerboseOperations = (
   client: ApolloClient<NormalizedCacheObject>,
   setVerboseApolloOperations: ISetVerboseApolloOperations,
-  rawData: IApolloInspectorState
+  rawData: IApolloInspectorState,
+  config: IInspectorTrackingConfig
 ) => {
   const selectedApolloClient: ApolloClient<NormalizedCacheObject> = client;
 
   const methods = [
-    setTrackLink,
     overrideFetchQueryObservable,
     overrideQueryInfoMarkResult,
     overrideFetchQueryByPolicy,
@@ -44,6 +46,31 @@ export const recordVerboseOperations = (
       setVerboseApolloOperations
     );
     revertMethods.push(revertFun);
+  });
+
+  const revertTrackLink = setLinkInFront(
+    client,
+    trackLink(rawData, setVerboseApolloOperations)
+  );
+  revertMethods.push(revertTrackLink);
+
+  const setOperation = (cb: (op: IDebugOperation) => IDebugOperation) => {
+    const operation = rawData.verboseOperationsMap.get(
+      rawData.currentOperationId
+    );
+    if (operation) {
+      const updatedOperation = cb(operation);
+      rawData.verboseOperationsMap.set(
+        rawData.currentOperationId,
+        updatedOperation
+      );
+    }
+  };
+
+  config.hooks?.forEach((hook) => {
+    const link = hook.getLink(setOperation);
+    const revertLink = setLinkInFront(client, link);
+    revertMethods.push(revertLink);
   });
 
   return () => {
