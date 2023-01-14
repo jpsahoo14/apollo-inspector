@@ -199,9 +199,7 @@ export interface IInspectorTrackingConfig {
 }
 
 export interface IHook {
-  getLink: (
-    setOperation: (cb: (op: IDebugOperation) => IDebugOperation) => void
-  ) => ApolloLink;
+  getLink: (getOperationId: () => number) => ApolloLink;
   transform: (op: IVerboseOperation) => IVerboseOperation;
 }
 

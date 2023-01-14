@@ -42,6 +42,9 @@ export const trackLink = (
 
       const subscription = observable.subscribe({
         next: (result: unknown) => {
+          if (operationId != 0) {
+            rawData.currentOperationId = operationId;
+          }
           const linkNextExecutionTime = performance.now();
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             rawData.enableDebug &&
@@ -69,6 +72,9 @@ export const trackLink = (
             );
         },
         error: (error: unknown) => {
+          if (operationId != 0) {
+            rawData.currentOperationId = operationId;
+          }
           rawData.enableDebug &&
             console.log(
               `APD operationId:${operationId} linkErrorExecutionTime`
@@ -84,6 +90,9 @@ export const trackLink = (
           subscription.unsubscribe();
         },
         complete: () => {
+          if (operationId != 0) {
+            rawData.currentOperationId = operationId;
+          }
           rawData.enableDebug &&
             console.log(`APD operationId:${operationId} linkCompleteExecution`);
 

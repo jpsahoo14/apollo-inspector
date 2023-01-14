@@ -54,21 +54,12 @@ export const recordVerboseOperations = (
   );
   revertMethods.push(revertTrackLink);
 
-  const setOperation = (cb: (op: IDebugOperation) => IDebugOperation) => {
-    const operation = rawData.verboseOperationsMap.get(
-      rawData.currentOperationId
-    );
-    if (operation) {
-      const updatedOperation = cb(operation);
-      rawData.verboseOperationsMap.set(
-        rawData.currentOperationId,
-        updatedOperation
-      );
-    }
+  const getOperationId = () => {
+    return rawData.currentOperationId;
   };
 
   config.hooks?.forEach((hook) => {
-    const link = hook.getLink(setOperation);
+    const link = hook.getLink(getOperationId);
     const revertLink = setLinkInFront(client, link);
     revertMethods.push(revertLink);
   });
