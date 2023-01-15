@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import {
   IInspectorTrackingConfig,
   IApolloInspectorState,
@@ -28,6 +28,7 @@ export const initializeRawData = (): IDataSetters => {
     operationIdCounter: 0,
     enableDebug: false,
   };
+  (window as any).rawData = rawData;
   const getRawData = () => rawData;
 
   return {
@@ -83,12 +84,12 @@ export const startRecordingInternal = ({
   config,
   dataSetters,
 }: {
-  client: ApolloClient<InMemoryCache>;
+  client: ApolloClient<NormalizedCacheObject>;
   config: IInspectorTrackingConfig;
   dataSetters: IDataSetters;
 }) => {
   const cleanups: (() => void)[] = [];
-  if (config.trackCacheOperation) {
+  if (config.tracking.trackCacheOperation) {
     const cleanUpWriteToCache = recordOnlyWriteToCacheOperations(
       client,
       dataSetters.setCacheOperations
@@ -96,7 +97,7 @@ export const startRecordingInternal = ({
     cleanups.push(cleanUpWriteToCache);
   }
 
-  if (config.trackAllOperations) {
+  if (config.tracking.trackAllOperations) {
     const cleanUpAllOperation = recordAllOperations(
       client,
       dataSetters.setAllOperations
@@ -107,7 +108,8 @@ export const startRecordingInternal = ({
   const cleanUpVerboseOperations = recordVerboseOperations(
     client,
     dataSetters.setVerboseOperations,
-    dataSetters.getRawData()
+    dataSetters.getRawData(),
+    config
   );
   cleanups.push(cleanUpVerboseOperations);
 

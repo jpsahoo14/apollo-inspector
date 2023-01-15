@@ -1,5 +1,9 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
-import { IInspectorTrackingConfig, IDataSetters } from "./interfaces";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
+import {
+  IInspectorTrackingConfig,
+  IDataSetters,
+  IStopTracking,
+} from "./interfaces";
 import { defaultConfig } from "./apollo-inspector-utils";
 import { extractOperations } from "./extract-operations";
 import {
@@ -9,16 +13,15 @@ import {
 
 export class ApolloInspector {
   private isRecording = false;
-  constructor(private client: ApolloClient<InMemoryCache>) {}
+  constructor(private client: ApolloClient<NormalizedCacheObject>) {}
 
-  public startTracking(config?: IInspectorTrackingConfig) {
+  public startTracking(
+    config: IInspectorTrackingConfig = defaultConfig
+  ): IStopTracking {
     if (this.isRecording == true) {
       throw new Error("Recording already in progress");
     }
 
-    if (!config) {
-      config = defaultConfig;
-    }
     this.setRecording(true);
     const dataSetters: IDataSetters = initializeRawData();
 
@@ -33,7 +36,7 @@ export class ApolloInspector {
       cleanUps.forEach((cleanup) => {
         cleanup();
       });
-      return extractOperations(dataSetters.getRawData());
+      return extractOperations(dataSetters.getRawData(), config);
     };
   }
 

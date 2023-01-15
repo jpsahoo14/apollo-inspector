@@ -1,9 +1,16 @@
-import { IApolloInspectorState, IDataView } from "../interfaces";
+import {
+  IApolloInspectorState,
+  IDataView,
+  IInspectorTrackingConfig,
+} from "../interfaces";
 import { extractCacheOperations } from "./extract-cache-operations";
 import { extractAllOperationsData } from "./extract-all-operations";
 import { extractVerboseOperationsData } from "./extract-verbose-operations";
 
-export const extractOperations = (rawData: IApolloInspectorState) => {
+export const extractOperations = (
+  rawData: IApolloInspectorState,
+  config: IInspectorTrackingConfig
+) => {
   const result: IDataView = {
     affectedQueriesOperations: null,
     allOperations: null,
@@ -14,7 +21,8 @@ export const extractOperations = (rawData: IApolloInspectorState) => {
   result.operations = extractCacheOperations(rawData.operations);
   result.allOperations = extractAllOperationsData(rawData.allOperations);
   result.verboseOperations = extractVerboseOperationsData(
-    rawData.verboseOperationsMap
+    rawData.verboseOperationsMap,
+    config
   );
 
   return result;

@@ -128,6 +128,22 @@ export class IDebugOperation {
     return this.duration.totalExecutionTime || Not_Available;
   };
 
+  protected getCacheWriteTime = () => {
+    if (!this.duration.totalCacheWriteTime) {
+      if (this.duration.cacheWriteEnd && this.duration.cacheWriteStart) {
+        const value =
+          this.duration.cacheWriteEnd - this.duration.cacheWriteStart;
+        if (!isNaN(value)) {
+          this.duration.totalCacheWriteTime = parseFloat(
+            value.toFixed(this.decimalNumber)
+          );
+        }
+      }
+    }
+
+    return this.duration.totalCacheWriteTime || Not_Available;
+  };
+
   public getOperationInfo(): IVerboseOperation {
     const operationName = getOperationNameV2(this._query);
     const operationString = print(this._query);
@@ -152,6 +168,9 @@ export class IDebugOperation {
     switch (this._dataId) {
       case DataId.ROOT_QUERY: {
         return OperationType.Query;
+      }
+      case DataId.ROOT_MUTATION: {
+        return OperationType.Mutation;
       }
     }
     return OperationType.Unknown;

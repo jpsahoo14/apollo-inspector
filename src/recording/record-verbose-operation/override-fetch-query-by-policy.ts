@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
@@ -9,7 +9,7 @@ import {
 } from "../../interfaces";
 
 export const overrideFetchQueryByPolicy = (
-  apolloClient: ApolloClient<InMemoryCache>,
+  apolloClient: ApolloClient<NormalizedCacheObject>,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {

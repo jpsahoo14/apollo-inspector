@@ -1,23 +1,16 @@
-import {
-  ApolloClient,
-  ApolloLink,
-  InMemoryCache,
-  Observable,
-  FetchResult,
-} from "@apollo/client";
+import { ApolloLink, Observable, FetchResult } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   OperationStage,
   IVerboseOperationMap,
   QueryOperation,
-} from "../../interfaces";
+} from "../interfaces";
 
-export const setTrackLink = (
-  apolloClient: ApolloClient<InMemoryCache>,
+export const trackLink = (
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
-) => {
+): ApolloLink => {
   const map: { [key: string]: boolean } = {};
   const trackLink = new ApolloLink((operation, forward) => {
     const operationId = rawData.currentOperationId;
@@ -49,6 +42,9 @@ export const setTrackLink = (
 
       const subscription = observable.subscribe({
         next: (result: unknown) => {
+          if (operationId != 0) {
+            rawData.currentOperationId = operationId;
+          }
           const linkNextExecutionTime = performance.now();
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             rawData.enableDebug &&
@@ -76,6 +72,9 @@ export const setTrackLink = (
             );
         },
         error: (error: unknown) => {
+          if (operationId != 0) {
+            rawData.currentOperationId = operationId;
+          }
           rawData.enableDebug &&
             console.log(
               `APD operationId:${operationId} linkErrorExecutionTime`
@@ -91,6 +90,9 @@ export const setTrackLink = (
           subscription.unsubscribe();
         },
         complete: () => {
+          if (operationId != 0) {
+            rawData.currentOperationId = operationId;
+          }
           rawData.enableDebug &&
             console.log(`APD operationId:${operationId} linkCompleteExecution`);
 
@@ -108,11 +110,6 @@ export const setTrackLink = (
       });
     });
   });
-  const currentLink = apolloClient.link;
-  const combinedLink = ApolloLink.concat(trackLink, currentLink);
-  apolloClient.setLink(combinedLink);
 
-  return () => {
-    apolloClient.setLink(currentLink);
-  };
+  return trackLink;
 };

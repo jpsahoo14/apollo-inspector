@@ -1,7 +1,7 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 
 export const createClient = () => {
-  const cache = new InMemoryCache();
+  const cache = new NormalizedCacheObject();
   const client = new ApolloClient({ cache });
 
   return client;

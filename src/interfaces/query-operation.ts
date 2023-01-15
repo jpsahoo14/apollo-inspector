@@ -225,22 +225,6 @@ export class QueryOperation extends IDebugOperation {
     );
   };
 
-  private getCacheWriteTime = () => {
-    if (!this.duration.totalCacheWriteTime) {
-      if (this.duration.cacheWriteEnd && this.duration.cacheWriteStart) {
-        const value =
-          this.duration.cacheWriteEnd - this.duration.cacheWriteStart;
-        if (!isNaN(value)) {
-          this.duration.totalCacheWriteTime = parseFloat(
-            value.toFixed(this.decimalNumber)
-          );
-        }
-      }
-    }
-
-    return this.duration.totalCacheWriteTime || Not_Available;
-  };
-
   private getCacheDiffTime = () => {
     if (!this.duration.totalCacheDiffTime) {
       if (this.duration.cacheDiffEnd && this.duration.cacheDiffStart) {

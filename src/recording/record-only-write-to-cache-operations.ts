@@ -1,9 +1,9 @@
 import { ISetApolloOperations, IApolloOperation } from "../interfaces";
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import { cloneDeep } from "lodash";
 
 export const recordOnlyWriteToCacheOperations = (
-  client: ApolloClient<InMemoryCache>,
+  client: ApolloClient<NormalizedCacheObject>,
   setApolloOperations: ISetApolloOperations
 ): (() => void) => {
   const cache = client.cache;

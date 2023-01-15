@@ -5,6 +5,12 @@ import {
   Observable,
   FetchResult,
   ErrorPolicy,
+  InMemoryCache,
+  FetchPolicy,
+  MutationUpdaterFunction,
+  InternalRefetchQueriesInclude,
+  OnQueryUpdated,
+  MutationOptions,
 } from "@apollo/client";
 
 export interface IDiff {
@@ -25,7 +31,9 @@ export interface IApolloClient {
 }
 export interface IQueryManager {
   queries: Map<string, IQueryInfo>;
-  getObservableFromLink: () => Observable<unknown>;
+  getObservableFromLink: (
+    ...args: IGetObservableFromLinkArgs
+  ) => Observable<unknown>;
   inFlightLinkObservables: Map<
     DocumentNode,
     Map<string, Observable<FetchResult>>
@@ -33,7 +41,44 @@ export interface IQueryManager {
   fetchQueryObservable: IFetchQueryObservable;
   getQuery: (queryId: number) => unknown;
   fetchQueryByPolicy: (...args: IFetchQueryByPolicy) => unknown;
+  markMutationResult: (...args: IMarkMutationResultArgs) => unknown;
 }
+
+export type MutationFetchPolicy = Extract<
+  FetchPolicy,
+  "network-only" | "no-cache"
+>;
+
+export type IMarkMutationResultArgs = [IMutationResult, InMemoryCache];
+
+export type IMutationResult = {
+  mutationId: string;
+  result: FetchResult<any>;
+  document: DocumentNode;
+  variables?: OperationVariables;
+  fetchPolicy?: MutationFetchPolicy;
+  errorPolicy: ErrorPolicy;
+  context?: unknown;
+  updateQueries: MutationOptions["updateQueries"];
+  update?: MutationUpdaterFunction<
+    unknown,
+    OperationVariables,
+    unknown,
+    InMemoryCache
+  >;
+  awaitRefetchQueries?: boolean;
+  refetchQueries?: InternalRefetchQueriesInclude;
+  removeOptimistic?: string;
+  onQueryUpdated?: OnQueryUpdated<any>;
+  keepRootFields?: boolean;
+};
+
+export type IGetObservableFromLinkArgs = [
+  DocumentNode,
+  { queryDeduplication: boolean },
+  OperationVariables,
+  boolean
+];
 
 export type IFetchQueryObservable = (
   ...args: IFetchQueryObservableParams

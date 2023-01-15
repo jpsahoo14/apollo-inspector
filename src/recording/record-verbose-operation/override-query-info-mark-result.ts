@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
   ICachedQueryInfo,
@@ -10,7 +10,7 @@ import {
 } from "../../interfaces";
 
 export const overrideQueryInfoMarkResult = (
-  apolloClient: ApolloClient<InMemoryCache>,
+  apolloClient: ApolloClient<NormalizedCacheObject>,
   rawData: IApolloInspectorState,
   _setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
@@ -27,7 +27,7 @@ export const overrideQueryInfoMarkResult = (
 };
 
 const overrideForExistingQueries = (
-  apolloClient: ApolloClient<InMemoryCache>,
+  apolloClient: ApolloClient<NormalizedCacheObject>,
   rawData: IApolloInspectorState
 ) => {
   const existingWatchQueriesMap: Map<string, IQueryInfo> = (
@@ -76,7 +76,7 @@ const overrideForExistingQueries = (
 };
 
 const overrideForNewQueries = (
-  apolloClient: ApolloClient<InMemoryCache>,
+  apolloClient: ApolloClient<NormalizedCacheObject>,
   rawData: IApolloInspectorState
 ) => {
   const originalWatchQueriesMap = (apolloClient as unknown as IApolloClient)
@@ -152,7 +152,7 @@ const overrideForNewQueries = (
   };
 };
 
-const getAffectedQueries = (client: ApolloClient<InMemoryCache>) => {
+const getAffectedQueries = (client: ApolloClient<NormalizedCacheObject>) => {
   const watchQueries = (client as unknown as IApolloClient).queryManager
     .queries;
   const affectedQueries = [];

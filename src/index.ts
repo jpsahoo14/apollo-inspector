@@ -1,1 +1,1 @@
-export * from "./apollo-inspector"
+export * from "./apollo-inspector";
