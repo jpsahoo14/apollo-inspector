@@ -172,6 +172,9 @@ export class IDebugOperation {
       case DataId.ROOT_MUTATION: {
         return OperationType.Mutation;
       }
+      case DataId.ROOT_SUBSCRIPTION: {
+        return OperationType.Subscription;
+      }
     }
     return OperationType.Unknown;
   }

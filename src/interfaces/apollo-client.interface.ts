@@ -122,7 +122,15 @@ export interface IApolloClientCache {
   write: (...args: IApolloClientCacheWriteParams) => void;
 }
 
-export type IApolloClientCacheWriteParams = [];
+export type IApolloClientCacheWriteParams = [
+  IIApolloClientCacheWriteParamObject
+];
+export type IIApolloClientCacheWriteParamObject = {
+  dataId: "ROOT_SUBSCRIPTION";
+  query: DocumentNode;
+  result: unknown;
+  variables: OperationVariables;
+};
 
 export type IBroadcastWatches = [];
 export type ICacheDiffParams = [];

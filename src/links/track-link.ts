@@ -6,6 +6,7 @@ import {
   IVerboseOperationMap,
   QueryOperation,
 } from "../interfaces";
+import { resumeOperation } from "../apollo-inspector-utils";
 
 export const trackLink = (
   rawData: IApolloInspectorState,
@@ -42,70 +43,76 @@ export const trackLink = (
 
       const subscription = observable.subscribe({
         next: (result: unknown) => {
-          if (operationId != 0) {
-            rawData.currentOperationId = operationId;
-          }
-          const linkNextExecutionTime = performance.now();
-          setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-            rawData.enableDebug &&
-              console.log(
-                `APD operationId:${operationId} linkNextExecution`,
-                result
+          const cb = (): void => {
+            const linkNextExecutionTime = performance.now();
+            setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+              rawData.enableDebug &&
+                console.log(
+                  `APD operationId:${operationId} linkNextExecution`,
+                  result
+                );
+
+              const op = opMap.get(operationId) as QueryOperation | undefined;
+              if (op) {
+                op.duration.linkNextExecutionTime?.push(linkNextExecutionTime);
+                op.setOperationStage(OperationStage.linkNextExecution);
+              }
+            });
+
+            !observer.closed &&
+              observer.next(
+                result as FetchResult<
+                  {
+                    [key: string]: unknown;
+                  },
+                  Record<string, unknown>,
+                  Record<string, unknown>
+                >
               );
+          };
 
-            const op = opMap.get(operationId) as QueryOperation | undefined;
-            if (op) {
-              op.duration.linkNextExecutionTime?.push(linkNextExecutionTime);
-              op.setOperationStage(OperationStage.linkNextExecution);
-            }
-          });
-
-          !observer.closed &&
-            observer.next(
-              result as FetchResult<
-                {
-                  [key: string]: unknown;
-                },
-                Record<string, unknown>,
-                Record<string, unknown>
-              >
-            );
+          resumeOperation(rawData, operationId, cb);
         },
         error: (error: unknown) => {
-          if (operationId != 0) {
-            rawData.currentOperationId = operationId;
-          }
-          rawData.enableDebug &&
-            console.log(
-              `APD operationId:${operationId} linkErrorExecutionTime`
-            );
+          const cb = () => {
+            rawData.enableDebug &&
+              console.log(
+                `APD operationId:${operationId} linkErrorExecutionTime`
+              );
 
-          const linkErrorExecutionTime = performance.now();
-          setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-            const op = opMap.get(operationId);
-            op && (op.duration.linkErrorExecutionTime = linkErrorExecutionTime);
-          });
+            const linkErrorExecutionTime = performance.now();
+            setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+              const op = opMap.get(operationId);
+              op &&
+                (op.duration.linkErrorExecutionTime = linkErrorExecutionTime);
+            });
 
-          !observer.closed && observer.error(error);
-          subscription.unsubscribe();
+            !observer.closed && observer.error(error);
+            subscription.unsubscribe();
+          };
+          resumeOperation(rawData, operationId, cb);
         },
         complete: () => {
-          if (operationId != 0) {
-            rawData.currentOperationId = operationId;
-          }
-          rawData.enableDebug &&
-            console.log(`APD operationId:${operationId} linkCompleteExecution`);
+          const cb = () => {
+            rawData.enableDebug &&
+              console.log(
+                `APD operationId:${operationId} linkCompleteExecution`
+              );
 
-          const linkCompleteExecutionTime = performance.now();
-          setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-            const op = opMap.get(operationId) as QueryOperation | undefined;
-            if (op) {
-              op.duration.linkCompleteExecutionTime = linkCompleteExecutionTime;
-              op.setOperationStage(OperationStage.linkCompleteExecution);
-            }
-          });
+            const linkCompleteExecutionTime = performance.now();
+            setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+              const op = opMap.get(operationId) as QueryOperation | undefined;
+              if (op) {
+                op.duration.linkCompleteExecutionTime =
+                  linkCompleteExecutionTime;
+                op.setOperationStage(OperationStage.linkCompleteExecution);
+              }
+            });
 
-          !observer.closed && observer.complete();
+            !observer.closed && observer.complete();
+          };
+
+          resumeOperation(rawData, operationId, cb);
         },
       });
     });

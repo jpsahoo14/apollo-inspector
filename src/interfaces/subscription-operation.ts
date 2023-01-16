@@ -1,5 +1,6 @@
+import { WatchQueryFetchPolicy } from "@apollo/client";
 import { IDebugOperation, IDebugOperationConstructor } from "./debug-operation";
-import { FetchPolicy } from "@apollo/client";
+import { IDiff } from "./apollo-client.interface";
 import {
   OperationStage,
   ResultsFrom,
@@ -8,28 +9,27 @@ import {
 import { cloneDeep } from "lodash";
 import { getOperationNameV2 } from "../apollo-inspector-utils";
 import { print } from "graphql";
-import { MutationFetchPolicy } from "./apollo-client.interface";
 
-export interface IMutationOperationConstructor
-  extends IDebugOperationConstructor {
-  fetchPolicy: MutationFetchPolicy;
-}
+export interface ISubscriptionOperationConstructor
+  extends IDebugOperationConstructor {}
 
-export class MutationOperation extends IDebugOperation {
+export class SubscriptionOperation extends IDebugOperation {
   private _operationStage: OperationStage;
   private _operationStages: OperationStage[];
 
-  public fetchPolicy: MutationFetchPolicy;
+  public deduplication: boolean;
+  public diff: IDiff | undefined;
+  public piggyBackOnExistingObservable: boolean;
+  public fetchPolicy: WatchQueryFetchPolicy | "no-cache" | undefined;
 
   constructor({
     dataId,
     debuggerEnabled,
     errorPolicy,
-    fetchPolicy,
     operationId,
     query,
     variables,
-  }: IMutationOperationConstructor) {
+  }: ISubscriptionOperationConstructor) {
     super({
       dataId,
       debuggerEnabled,
@@ -39,13 +39,15 @@ export class MutationOperation extends IDebugOperation {
       variables,
     });
 
-    this.fetchPolicy = fetchPolicy;
-    this._operationStage = OperationStage.mutate;
-    this._operationStages = [OperationStage.mutate];
+    this._operationStage = OperationStage.startGraphQLSubscription;
+    this._operationStages = [OperationStage.startGraphQLSubscription];
+    this.deduplication = true;
+    this.piggyBackOnExistingObservable = false;
+    const val = false;
   }
 
-  public get operationStage() {
-    return this._operationStage;
+  public setOperationStage(opStage: OperationStage) {
+    this._operationStages.push(opStage);
   }
 
   public addResult(result: unknown) {
@@ -70,17 +72,12 @@ export class MutationOperation extends IDebugOperation {
       fetchPolicy: this.fetchPolicy,
       warning: undefined,
       duration: {
-        totalTime: this.getTotalExecutionTime(),
+        totalTime: "NA",
         cacheWriteTime: this.getCacheWriteTime(),
         requestExecutionTime: "NA",
         cacheDiffTime: "NA",
         cacheBroadcastWatchesTime: "NA",
       },
     };
-  }
-
-  public setOperationStage(opStage: OperationStage) {
-    this._operationStage = opStage;
-    this._operationStages.push(opStage);
   }
 }

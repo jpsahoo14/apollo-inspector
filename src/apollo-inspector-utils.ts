@@ -1,6 +1,5 @@
 import { OperationDefinitionNode, DocumentNode } from "graphql";
-import { ApolloClient } from "@apollo/client";
-import { IInspectorTrackingConfig } from "./interfaces";
+import { IInspectorTrackingConfig, IApolloInspectorState } from "./interfaces";
 
 export const getOperationName = (query: DocumentNode) => {
   const definition =
@@ -38,4 +37,18 @@ export const copyToClipboard = async (obj: unknown) => {
 export const defaultConfig: IInspectorTrackingConfig = {
   tracking: { trackVerboseOperations: true },
   hooks: [],
+};
+
+export const resumeOperation = (
+  rawData: IApolloInspectorState,
+  currentOperationId: number,
+  cb: () => void
+) => {
+  const oldCurrentOperationId = rawData.currentOperationId;
+  if (currentOperationId != 0) {
+    rawData.currentOperationId = currentOperationId;
+  }
+  const result = cb();
+  rawData.currentOperationId = oldCurrentOperationId;
+  return result;
 };

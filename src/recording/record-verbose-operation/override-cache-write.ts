@@ -1,11 +1,12 @@
-import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
+import { ApolloClient, NormalizedCacheObject, Cache } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   OperationStage,
-  IApolloClientCacheWriteParams,
   IVerboseOperationMap,
   QueryOperation,
+  SubscriptionOperation,
+  DataId,
 } from "../../interfaces";
 
 export const overrideCacheWrite = (
@@ -16,7 +17,7 @@ export const overrideCacheWrite = (
   const cache = apolloClient.cache;
   const originalWrite = cache.write;
 
-  cache.write = function override(...args: IApolloClientCacheWriteParams) {
+  cache.write = function override(...args: [Cache.WriteOptions]) {
     const cacheWriteStart = performance.now();
     const result = originalWrite.apply(this, args);
     const cacheWriteEnd = performance.now();
@@ -37,6 +38,22 @@ export const overrideCacheWrite = (
           operation.duration.cacheWriteEnd = cacheWriteEnd;
         }
         operation?.setOperationStage(OperationStage.addedDataToCache);
+      });
+    } else if (args[0].dataId === "ROOT_SUBSCRIPTION") {
+      setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+        const { query, result, variables } = args[0];
+        const operationId = ++rawData.operationIdCounter;
+        const operation = new SubscriptionOperation({
+          dataId: DataId.ROOT_SUBSCRIPTION,
+          query,
+          variables,
+          operationId,
+          debuggerEnabled: rawData.enableDebug || false,
+          errorPolicy: "none",
+        });
+        operation.addResult(result);
+        operation.setOperationStage(OperationStage.addedDataToCache);
+        opMap.set(operationId, operation);
       });
     }
     return result;

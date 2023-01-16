@@ -6,7 +6,6 @@ import {
   ApolloLink,
 } from "@apollo/client";
 import { IQueryInfo } from "./apollo-client.interface";
-import { IDebugOperation } from "./debug-operation";
 
 export enum DebugState {
   Initial,
@@ -35,6 +34,7 @@ export enum OperationStage {
   cacheBroadcastWatches = "cacheBroadcastWatches",
   linkCompleteExecution = "linkCompleteExecution",
   mutate = "mutate",
+  startGraphQLSubscription = "startGraphQLSubscription",
 }
 
 export enum ResultsFrom {
