@@ -12,7 +12,8 @@
   },
   "keywords": [
     "inspector",
-    "apollo"
+    "apollo",
+    "apollo inspector"
   ],
   "license": "MIT",
   "devDependencies": {
