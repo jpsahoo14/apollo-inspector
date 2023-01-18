@@ -64,6 +64,12 @@ export interface IDebugOperationDuration {
   totalCacheBroadcastWatchesTime?: DOMHighResTimeStamp;
 }
 
+export interface ITiming {
+  queuedAt: number;
+  responseReceivedFromServerAt: number;
+  dataWrittenToCacheCompletedAt: number;
+}
+
 export interface IIPCTime {
   windowToWorkerRequestSendTime?: DOMHighResTimeStamp;
   windowToWorkerRequestReceviedTime?: DOMHighResTimeStamp;
@@ -143,6 +149,7 @@ export interface IVerboseOperation {
   isActive?: boolean;
   duration?: IVerboseOperationDuration | undefined;
   fetchPolicy: WatchQueryFetchPolicy | undefined;
+  timing: ITiming;
 }
 
 export interface IVerboseOperationDuration {

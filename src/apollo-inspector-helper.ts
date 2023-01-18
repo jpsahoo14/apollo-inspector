@@ -15,6 +15,7 @@ import {
   recordAllOperations,
   recordVerboseOperations,
 } from "./recording";
+import { Timer } from "timer-node";
 
 export const initializeRawData = (): IDataSetters => {
   const rawData = {
@@ -27,6 +28,7 @@ export const initializeRawData = (): IDataSetters => {
     currentOperationId: 0,
     operationIdCounter: 0,
     enableDebug: false,
+    timer: new Timer(),
   };
   (window as any).rawData = rawData;
   const getRawData = () => rawData;
@@ -36,6 +38,7 @@ export const initializeRawData = (): IDataSetters => {
     setCacheOperations: getSetCacheOperations(getRawData()),
     setAllOperations: getSetAllOperations(getRawData()),
     setVerboseOperations: getSetVerboseOperations(getRawData()),
+    getTimerInstance: () => getRawData().timer,
   };
 };
 

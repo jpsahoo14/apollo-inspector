@@ -5,11 +5,13 @@ import {
   Not_Available,
   IVerboseOperation,
   OperationType,
+  ITiming,
 } from "./apollo-inspector.interface";
 import { DocumentNode, print } from "graphql";
 import { ErrorPolicy, OperationVariables } from "@apollo/client";
 import { getOperationNameV2 } from "../apollo-inspector-utils";
-
+import { Timer } from "timer-node";
+import { RestrictedTimer } from "./restricted-timer";
 export interface IDebugOperationConstructor {
   dataId: DataId;
   query: DocumentNode;
@@ -31,7 +33,8 @@ export class IDebugOperation {
   protected decimalNumber = 2;
   protected debuggerEnabled: boolean;
   protected errorPolicy: ErrorPolicy;
-
+  protected timer: RestrictedTimer;
+  protected timing: ITiming;
   public duration: IDebugOperationDuration;
   public serverQuery: DocumentNode | undefined;
   public clientQuery: DocumentNode | undefined;
@@ -70,6 +73,7 @@ export class IDebugOperation {
         errorPolicy: this.errorPolicy,
       });
     }
+    this.timing.queuedAt = this.timer.getCurrentMs();
   }
 
   public get affectedQueries() {

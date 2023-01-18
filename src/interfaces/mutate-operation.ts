@@ -76,11 +76,15 @@ export class MutationOperation extends IDebugOperation {
         cacheDiffTime: "NA",
         cacheBroadcastWatchesTime: "NA",
       },
+      timing: this.timing,
     };
   }
 
   public setOperationStage(opStage: OperationStage) {
     this._operationStage = opStage;
     this._operationStages.push(opStage);
+    if (opStage == OperationStage.addedDataToCache) {
+      this.timing.dataWrittenToCacheCompletedAt = this.timer.getCurrentMs();
+    }
   }
 }

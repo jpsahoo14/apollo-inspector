@@ -30,7 +30,8 @@
     "@apollo/client": "3.6.6",
     "@types/node": "^18.11.17",
     "graphql": "^16.6.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "timer-node": "^5.0.7"
   },
   "peerDependencies": {
     "react": "^17.0.0"

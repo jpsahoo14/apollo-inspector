@@ -3,12 +3,14 @@ import {
   IVerboseOperationMap,
 } from "./apollo-inspector-debug-interfaces";
 import { IApolloOperation, IAllOperations } from "./apollo-inspector.interface";
+import { Timer } from "timer-node";
 
 export interface IDataSetters {
   getRawData: () => IApolloInspectorState;
   setCacheOperations: ISetCacheOperations;
   setAllOperations: ISetAllOperations;
   setVerboseOperations: ISetVerboseOperations;
+  getTimerInstance: () => Timer;
 }
 
 export type ISetCacheOperations = (

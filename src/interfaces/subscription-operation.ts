@@ -48,6 +48,9 @@ export class SubscriptionOperation extends IDebugOperation {
 
   public setOperationStage(opStage: OperationStage) {
     this._operationStages.push(opStage);
+    if (opStage == OperationStage.addedDataToCache) {
+      this.timing.dataWrittenToCacheCompletedAt = this.timer.getCurrentMs();
+    }
   }
 
   public addResult(result: unknown) {
@@ -78,6 +81,7 @@ export class SubscriptionOperation extends IDebugOperation {
         cacheDiffTime: "NA",
         cacheBroadcastWatchesTime: "NA",
       },
+      timing: this.timing,
     };
   }
 }

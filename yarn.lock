@@ -1779,6 +1779,11 @@ terser@^5.2.0:
     commander "^2.20.0"
     source-map-support "~0.5.20"
 
+timer-node@^5.0.7:
+  version "5.0.7"
+  resolved "https://domoreexp.pkgs.visualstudio.com/_packaging/npm-mirror/npm/registry/timer-node/-/timer-node-5.0.7.tgz#69710fc660c46884bec57135272f86883453b839"
+  integrity sha1-aXEPxmDEaIS+xXE1Jy+GiDRTuDk=
+
 timsort@^0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/timsort/-/timsort-0.3.0.tgz#405411a8e7e6339fe64db9a234de11dc31e02bd4"

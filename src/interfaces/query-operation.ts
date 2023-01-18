@@ -131,6 +131,11 @@ export class QueryOperation extends IDebugOperation {
         break;
       case OperationStage.addedDataToCache:
         {
+          if (opStage == OperationStage.addedDataToCache) {
+            this.timing.dataWrittenToCacheCompletedAt =
+              this.timer.getCurrentMs();
+          }
+
           this.doesOperationExist(OperationStage.fetchQueryObservable);
           this.doesOperationExist(OperationStage.linkExecutionStart);
           this.doesOperationExist(OperationStage.linkNextExecution);
@@ -177,6 +182,7 @@ export class QueryOperation extends IDebugOperation {
         cacheDiffTime: this.getCacheDiffTime(),
         cacheBroadcastWatchesTime: this.getCacheBroadcastWatchesTime(),
       },
+      timing: this.timing,
     };
   }
 
