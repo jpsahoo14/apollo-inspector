@@ -36,6 +36,7 @@ export class ApolloInspector {
       cleanUps.forEach((cleanup) => {
         cleanup();
       });
+      dataSetters.getTimerInstance().stop();
       return extractOperations(dataSetters.getRawData(), config);
     };
   }

@@ -13,6 +13,7 @@ import {
   QueryOperation,
   IVerboseOperationMap,
 } from "../../interfaces";
+import { RestrictedTimer } from "../../interfaces/restricted-timer";
 
 export const overrideFetchQueryObservable = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
@@ -40,7 +41,7 @@ export const overrideFetchQueryObservable = (
           `APD operationId:${nextId} fetchQueryObservable start queryId:${queryId}`
         );
       setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-        const debugOp = new QueryOperation({
+        const queryOp = new QueryOperation({
           dataId: DataId.ROOT_QUERY,
           queryInfo,
           variables: options.variables,
@@ -49,8 +50,9 @@ export const overrideFetchQueryObservable = (
           fetchPolicy,
           debuggerEnabled: rawData.enableDebug || false,
           errorPolicy,
+          timer: new RestrictedTimer(rawData.timer),
         });
-        opMap.set(nextId, debugOp);
+        opMap.set(nextId, queryOp);
         if (
           rawData.enableDebug &&
           rawData.queryInfoToOperationId.get(queryInfo)
@@ -63,7 +65,7 @@ export const overrideFetchQueryObservable = (
             );
           debugger;
         }
-        rawData.queryInfoToOperationId.set(queryInfo, debugOp);
+        rawData.queryInfoToOperationId.set(queryInfo, queryOp);
       });
       rawData.currentOperationId = nextId;
       const observable = originalFetchQueryObservable.apply(this, args);

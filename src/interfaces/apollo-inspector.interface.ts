@@ -65,9 +65,9 @@ export interface IDebugOperationDuration {
 }
 
 export interface ITiming {
-  queuedAt: number;
-  responseReceivedFromServerAt: number;
-  dataWrittenToCacheCompletedAt: number;
+  queuedAt: number | string;
+  responseReceivedFromServerAt: number | string;
+  dataWrittenToCacheCompletedAt: number | string;
 }
 
 export interface IIPCTime {
@@ -149,7 +149,7 @@ export interface IVerboseOperation {
   isActive?: boolean;
   duration?: IVerboseOperationDuration | undefined;
   fetchPolicy: WatchQueryFetchPolicy | undefined;
-  timing: ITiming;
+  timing: ITiming | undefined;
 }
 
 export interface IVerboseOperationDuration {

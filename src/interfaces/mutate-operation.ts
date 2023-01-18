@@ -29,6 +29,7 @@ export class MutationOperation extends IDebugOperation {
     operationId,
     query,
     variables,
+    timer,
   }: IMutationOperationConstructor) {
     super({
       dataId,
@@ -37,6 +38,7 @@ export class MutationOperation extends IDebugOperation {
       operationId,
       query,
       variables,
+      timer,
     });
 
     this.fetchPolicy = fetchPolicy;

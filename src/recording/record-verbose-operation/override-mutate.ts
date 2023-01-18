@@ -12,6 +12,7 @@ import {
   MutationOperation,
   MutationFetchPolicy,
 } from "../../interfaces";
+import { RestrictedTimer } from "../../interfaces/restricted-timer";
 
 export const overrideMutate = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
@@ -44,6 +45,7 @@ export const overrideMutate = (
         fetchPolicy: fetchPolicy as MutationFetchPolicy,
         debuggerEnabled: rawData.enableDebug || false,
         errorPolicy,
+        timer: new RestrictedTimer(rawData.timer),
       });
       opMap.set(operationId, mutateOperation);
     });

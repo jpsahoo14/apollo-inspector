@@ -18,7 +18,7 @@ import {
 import { Timer } from "timer-node";
 
 export const initializeRawData = (): IDataSetters => {
-  const rawData = {
+  const rawData: IApolloInspectorState = {
     operations: [],
     verboseOperationsMap: new Map(),
     allOperations: {},
@@ -28,7 +28,7 @@ export const initializeRawData = (): IDataSetters => {
     currentOperationId: 0,
     operationIdCounter: 0,
     enableDebug: false,
-    timer: new Timer(),
+    timer: new Timer().start(),
   };
   (window as any).rawData = rawData;
   const getRawData = () => rawData;

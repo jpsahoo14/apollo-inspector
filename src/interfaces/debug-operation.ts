@@ -10,8 +10,8 @@ import {
 import { DocumentNode, print } from "graphql";
 import { ErrorPolicy, OperationVariables } from "@apollo/client";
 import { getOperationNameV2 } from "../apollo-inspector-utils";
-import { Timer } from "timer-node";
 import { RestrictedTimer } from "./restricted-timer";
+
 export interface IDebugOperationConstructor {
   dataId: DataId;
   query: DocumentNode;
@@ -19,6 +19,7 @@ export interface IDebugOperationConstructor {
   operationId: number;
   debuggerEnabled: boolean;
   errorPolicy: ErrorPolicy;
+  timer: RestrictedTimer;
 }
 
 export class IDebugOperation {
@@ -46,6 +47,7 @@ export class IDebugOperation {
     operationId,
     debuggerEnabled,
     errorPolicy,
+    timer,
   }: IDebugOperationConstructor) {
     if (operationId === 0) {
       debugger;
@@ -73,6 +75,12 @@ export class IDebugOperation {
         errorPolicy: this.errorPolicy,
       });
     }
+    this.timer = timer;
+    this.timing = {
+      queuedAt: "NA",
+      dataWrittenToCacheCompletedAt: "NA",
+      responseReceivedFromServerAt: "NA",
+    };
     this.timing.queuedAt = this.timer.getCurrentMs();
   }
 
@@ -165,6 +173,7 @@ export class IDebugOperation {
       fetchPolicy: undefined,
       warning: undefined,
       duration: undefined,
+      timing: undefined,
     };
   }
 

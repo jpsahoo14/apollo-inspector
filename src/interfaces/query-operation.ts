@@ -35,6 +35,7 @@ export class QueryOperation extends IDebugOperation {
     query,
     queryInfo,
     variables,
+    timer,
   }: IQueryOperationConstructor) {
     super({
       dataId,
@@ -43,6 +44,7 @@ export class QueryOperation extends IDebugOperation {
       operationId,
       query,
       variables,
+      timer,
     });
 
     this.queryInfo = queryInfo;

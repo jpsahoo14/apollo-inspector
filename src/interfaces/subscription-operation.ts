@@ -29,6 +29,7 @@ export class SubscriptionOperation extends IDebugOperation {
     operationId,
     query,
     variables,
+    timer,
   }: ISubscriptionOperationConstructor) {
     super({
       dataId,
@@ -37,6 +38,7 @@ export class SubscriptionOperation extends IDebugOperation {
       operationId,
       query,
       variables,
+      timer,
     });
 
     this._operationStage = OperationStage.startGraphQLSubscription;

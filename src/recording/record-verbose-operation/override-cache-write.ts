@@ -8,6 +8,7 @@ import {
   SubscriptionOperation,
   DataId,
 } from "../../interfaces";
+import { RestrictedTimer } from "../../interfaces/restricted-timer";
 
 export const overrideCacheWrite = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
@@ -50,6 +51,7 @@ export const overrideCacheWrite = (
           operationId,
           debuggerEnabled: rawData.enableDebug || false,
           errorPolicy: "none",
+          timer: new RestrictedTimer(rawData.timer),
         });
         operation.addResult(result);
         operation.setOperationStage(OperationStage.addedDataToCache);

@@ -1,6 +1,7 @@
 import { IApolloOperation } from "./apollo-inspector.interface";
 import { IDebugOperation } from "./debug-operation";
 import { QueryOperation } from "./query-operation";
+import { Timer } from "timer-node";
 
 export type IVerboseOperationMap = Map<
   number,
@@ -17,6 +18,7 @@ export interface IApolloInspectorState {
   currentOperationId: number;
   operationIdCounter: number;
   enableDebug?: boolean;
+  timer: Timer;
 }
 
 export type ISetVerboseApolloOperations = (
