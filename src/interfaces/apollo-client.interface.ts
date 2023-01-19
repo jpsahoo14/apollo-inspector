@@ -42,8 +42,14 @@ export interface IQueryManager {
   getQuery: (queryId: number) => unknown;
   fetchQueryByPolicy: (...args: IFetchQueryByPolicy) => unknown;
   markMutationResult: (...args: IMarkMutationResultArgs) => unknown;
+  defaultOptions: IQueryManagerDefaultOptions;
 }
 
+export interface IQueryManagerDefaultOptions {
+  mutate?: {
+    fetchPolicy: MutationFetchPolicy;
+  };
+}
 export type MutationFetchPolicy = Extract<
   FetchPolicy,
   "network-only" | "no-cache"

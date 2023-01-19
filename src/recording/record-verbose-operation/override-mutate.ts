@@ -11,6 +11,7 @@ import {
   IVerboseOperationMap,
   MutationOperation,
   MutationFetchPolicy,
+  IApolloClient,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces/restricted-timer";
 
@@ -20,7 +21,7 @@ export const overrideMutate = (
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
   const originalMutate = apolloClient.mutate;
-
+  const queryManager = (apolloClient as unknown as IApolloClient).queryManager;
   apolloClient.mutate = async function override(...args: unknown[]) {
     const operationId = ++rawData.operationIdCounter;
     const options = args[0] as MutationOptions;
@@ -42,7 +43,10 @@ export const overrideMutate = (
         variables,
         query: mutation,
         operationId,
-        fetchPolicy: fetchPolicy as MutationFetchPolicy,
+        fetchPolicy:
+          fetchPolicy ||
+          queryManager.defaultOptions.mutate?.fetchPolicy ||
+          ("network-only" as MutationFetchPolicy),
         debuggerEnabled: rawData.enableDebug || false,
         errorPolicy,
         timer: new RestrictedTimer(rawData.timer),
