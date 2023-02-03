@@ -6,6 +6,7 @@ import {
 import { extractCacheOperations } from "./extract-cache-operations";
 import { extractAllOperationsData } from "./extract-all-operations";
 import { extractVerboseOperationsData } from "./extract-verbose-operations";
+import { extractAffectedQueriesData } from "./extract-affected-queries-data";
 
 export const extractOperations = (
   rawData: IApolloInspectorState,
@@ -23,6 +24,9 @@ export const extractOperations = (
   result.verboseOperations = extractVerboseOperationsData(
     rawData.verboseOperationsMap,
     config
+  );
+  result.affectedQueriesOperations = extractAffectedQueriesData(
+    rawData.verboseOperationsMap
   );
 
   return result;
