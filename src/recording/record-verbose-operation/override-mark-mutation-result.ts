@@ -27,7 +27,6 @@ export const overrideMarkMutationResult = (
         const op = opMap.get(operationId) as QueryOperation | undefined;
         if (op) {
           op.addResult(result);
-          ``;
         }
       });
 

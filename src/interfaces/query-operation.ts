@@ -9,7 +9,7 @@ import { IDiff } from "./apollo-client.interface";
 import { print } from "graphql";
 import { WatchQueryFetchPolicy } from "@apollo/client";
 import { getOperationNameV2 } from "../apollo-inspector-utils";
-import { cloneDeep } from "lodash";
+import { cloneDeep } from "lodash-es";
 
 export interface IQueryOperationConstructor extends IDebugOperationConstructor {
   queryInfo: unknown;
@@ -66,6 +66,8 @@ export class QueryOperation extends IDebugOperation {
   }
 
   public addResult(result: unknown) {
+    console.log(`jps clonedeep`);
+    console.log({ cloneDeep });
     const clonedResult = cloneDeep(result);
     switch (this.fetchPolicy) {
       case "cache-first": {

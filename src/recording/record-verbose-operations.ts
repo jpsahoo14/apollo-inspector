@@ -13,7 +13,6 @@ import {
   overrideCacheDiff,
   overrideCacheWrite,
   overrideMutate,
-  overrideMarkMutationResult,
   overrideGetObservableFromLink,
 } from "./record-verbose-operation";
 import { trackLink, setLinkInFront } from "../links";
@@ -34,7 +33,6 @@ export const recordVerboseOperations = (
     overrideCacheDiff,
     overrideCacheWrite,
     overrideMutate,
-    overrideMarkMutationResult,
     overrideGetObservableFromLink,
   ];
   const revertMethods: (() => void)[] = [];

@@ -14,7 +14,7 @@ import {
   MutationOptions,
   FetchResult,
 } from "@apollo/client";
-import { cloneDeep } from "lodash";
+import { cloneDeep } from "lodash-es";
 
 type INextParams = [{ data: unknown }];
 

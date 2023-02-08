@@ -105,3 +105,4 @@ dist
 
 # parcel caching
 .parcel-cache/
+.DS_Store

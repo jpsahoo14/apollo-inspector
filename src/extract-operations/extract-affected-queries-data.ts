@@ -1,15 +1,10 @@
 /* eslint-disable msteams/no-eslint-disable */
 /* eslint-disable msteams/no-abusive-eslint-disable */
-import * as React from "react";
 import {
-  IApolloInspectorState,
-  IDataView,
   IAffectedQueryMap,
   IDebugOperation,
   IAffectedQuery,
-  IVerboseOperation,
   IVerboseOperationMap,
-  IInspectorTrackingConfig,
 } from "../interfaces";
 import { getOperationNameV2 } from "../apollo-inspector-utils";
 import { DocumentNode } from "graphql";

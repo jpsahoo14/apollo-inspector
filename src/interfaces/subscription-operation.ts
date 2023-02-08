@@ -6,7 +6,7 @@ import {
   ResultsFrom,
   IVerboseOperation,
 } from "./apollo-inspector.interface";
-import { cloneDeep } from "lodash";
+import { cloneDeep } from "lodash-es";
 import { getOperationNameV2 } from "../apollo-inspector-utils";
 import { print } from "graphql";
 
