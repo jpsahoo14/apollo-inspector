@@ -66,8 +66,6 @@ export class QueryOperation extends IDebugOperation {
   }
 
   public addResult(result: unknown) {
-    console.log(`jps clonedeep`);
-    console.log({ cloneDeep });
     const clonedResult = cloneDeep(result);
     switch (this.fetchPolicy) {
       case "cache-first": {
@@ -201,7 +199,7 @@ export class QueryOperation extends IDebugOperation {
   }
 
   private getWarning() {
-    if (this.diff && !this.diff.complete) {
+    if (this.diff && !this.diff.complete && this.diff.missing) {
       const msgs: unknown[] = [];
       this.diff.missing.forEach((m) => {
         msgs.push({ message: m.message, path: m.path });

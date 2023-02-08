@@ -7,10 +7,10 @@ if (require.main === module) {
         entryPoints: ["index.ts"],
         write: true,
         bundle: true,
-        minify: false,
+        minify: true,
         sourcemap: true,
         outfile: "dist/main.js",
-        format: "cjs",
+        format: "esm",
         platform: "browser",
       }),
     ];
