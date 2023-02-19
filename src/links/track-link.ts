@@ -5,6 +5,7 @@ import {
   OperationStage,
   IVerboseOperationMap,
   QueryOperation,
+  OperationStatus,
 } from "../interfaces";
 import { resumeOperation } from "../apollo-inspector-utils";
 
@@ -56,6 +57,7 @@ export const trackLink = (
               if (op) {
                 op.duration.linkNextExecutionTime?.push(linkNextExecutionTime);
                 op.setOperationStage(OperationStage.linkNextExecution);
+                op.addTimingInfo("responseReceivedFromServerAt");
               }
             });
 
@@ -83,8 +85,10 @@ export const trackLink = (
             const linkErrorExecutionTime = performance.now();
             setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
               const op = opMap.get(operationId);
-              op &&
-                (op.duration.linkErrorExecutionTime = linkErrorExecutionTime);
+              if (op) {
+                op.duration.linkErrorExecutionTime = linkErrorExecutionTime;
+                op.addTimingInfo("responseReceivedFromServerAt");
+              }
             });
 
             !observer.closed && observer.error(error);

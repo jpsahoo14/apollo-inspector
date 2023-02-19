@@ -6,7 +6,7 @@ export class RestrictedTimer {
     this.timer = timer;
   }
 
-  public getCurrentMs() {
+  public getCurrentMs(): number {
     return this.timer.ms();
   }
 }

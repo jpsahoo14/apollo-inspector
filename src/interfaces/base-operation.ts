@@ -2,27 +2,29 @@ import {
   DataId,
   IDebugOperationDuration,
   IOperationResult,
-  Not_Available,
   IVerboseOperation,
   OperationType,
   ITiming,
+  OperationStatus,
+  InternalOperationStatus,
 } from "./apollo-inspector.interface";
 import { DocumentNode, print } from "graphql";
 import { ErrorPolicy, OperationVariables } from "@apollo/client";
 import { getOperationNameV2 } from "../apollo-inspector-utils";
 import { RestrictedTimer } from "./restricted-timer";
+import { IBaseOperation } from "./base-operation.interface";
 
-export interface IDebugOperationConstructor {
+export interface IBaseOperationConstructor {
   dataId: DataId;
   query: DocumentNode;
   variables: OperationVariables | undefined;
   operationId: number;
   debuggerEnabled: boolean;
-  errorPolicy: ErrorPolicy;
+  errorPolicy: ErrorPolicy | undefined;
   timer: RestrictedTimer;
 }
 
-export class IDebugOperation {
+export class BaseOperation implements IBaseOperation {
   protected _dataId: DataId;
   protected _result: IOperationResult[];
   protected _query: DocumentNode;
@@ -33,8 +35,9 @@ export class IDebugOperation {
   protected _id: number;
   protected decimalNumber = 2;
   protected debuggerEnabled: boolean;
-  protected errorPolicy: ErrorPolicy;
+  protected errorPolicy: ErrorPolicy | undefined;
   protected timer: RestrictedTimer;
+  protected status: InternalOperationStatus[];
   protected timing: ITiming;
   public duration: IDebugOperationDuration;
   public serverQuery: DocumentNode | undefined;
@@ -48,7 +51,7 @@ export class IDebugOperation {
     debuggerEnabled,
     errorPolicy,
     timer,
-  }: IDebugOperationConstructor) {
+  }: IBaseOperationConstructor) {
     if (operationId === 0) {
       debugger;
     }
@@ -77,11 +80,16 @@ export class IDebugOperation {
     }
     this.timer = timer;
     this.timing = {
-      queuedAt: "NA",
-      dataWrittenToCacheCompletedAt: "NA",
-      responseReceivedFromServerAt: "NA",
+      queuedAt: NaN,
+      dataWrittenToCacheCompletedAt: NaN,
+      responseReceivedFromServerAt: NaN,
     };
     this.timing.queuedAt = this.timer.getCurrentMs();
+    this.status = [];
+    this.status.push(InternalOperationStatus.InFlight);
+  }
+  addResult(result: unknown): void {
+    throw new Error("Method not implemented.");
   }
 
   public get affectedQueries() {
@@ -110,6 +118,7 @@ export class IDebugOperation {
       debugger;
     }
     this.error = error;
+    this.addStatus(InternalOperationStatus.FailedToGetResultFromNetwork);
   }
 
   public setInActive() {
@@ -137,10 +146,10 @@ export class IDebugOperation {
       }
     }
 
-    return this.duration.totalExecutionTime || Not_Available;
+    return this.duration.totalExecutionTime || NaN;
   };
 
-  protected getCacheWriteTime = () => {
+  public getCacheWriteTime = (): number => {
     if (!this.duration.totalCacheWriteTime) {
       if (this.duration.cacheWriteEnd && this.duration.cacheWriteStart) {
         const value =
@@ -153,7 +162,7 @@ export class IDebugOperation {
       }
     }
 
-    return this.duration.totalCacheWriteTime || Not_Available;
+    return this.duration.totalCacheWriteTime || NaN;
   };
 
   public getOperationInfo(): IVerboseOperation {
@@ -174,10 +183,11 @@ export class IDebugOperation {
       warning: undefined,
       duration: undefined,
       timing: undefined,
+      status: this.getOperationStatus(),
     };
   }
 
-  protected getOperationType() {
+  public getOperationType() {
     switch (this._dataId) {
       case DataId.ROOT_QUERY: {
         return OperationType.Query;
@@ -190,5 +200,17 @@ export class IDebugOperation {
       }
     }
     return OperationType.Unknown;
+  }
+
+  public addTimingInfo(key: keyof ITiming): void {
+    this.timing[key] = this.timer.getCurrentMs();
+  }
+
+  public addStatus(status: InternalOperationStatus) {
+    this.status.push(status);
+  }
+
+  protected getOperationStatus() {
+    return OperationStatus.Unknown;
   }
 }

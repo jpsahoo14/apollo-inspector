@@ -35,6 +35,8 @@ export enum OperationStage {
   linkCompleteExecution = "linkCompleteExecution",
   mutate = "mutate",
   startGraphQLSubscription = "startGraphQLSubscription",
+  writeQuery = "writeQuery",
+  writeFragment = "writeFragment",
 }
 
 export enum ResultsFrom {
@@ -65,9 +67,9 @@ export interface IDebugOperationDuration {
 }
 
 export interface ITiming {
-  queuedAt: number | string;
-  responseReceivedFromServerAt: number | string;
-  dataWrittenToCacheCompletedAt: number | string;
+  queuedAt: number;
+  responseReceivedFromServerAt: number;
+  dataWrittenToCacheCompletedAt: number;
 }
 
 export interface IIPCTime {
@@ -116,6 +118,8 @@ export enum DataId {
   ROOT_MUTATION = "ROOT_MUTATION",
   ROOT_OPTIMISTIC_MUTATION = "ROOT_OPTIMISTIC_MUTATION",
   ROOT_SUBSCRIPTION = "ROOT_SUBSCRIPTION",
+  WRITE_QUERY = "WRITE_QUERY",
+  WRITE_FRAGMENT = "WRITE_FRAGMENT",
 }
 
 export interface IMutation {
@@ -136,20 +140,36 @@ export interface IOperation {
 }
 
 export interface IVerboseOperation {
-  id: number;
-  operationType: OperationType;
-  operationName: string | undefined;
+  id: number; // operationId
+  operationType: OperationType; // Type of operation, whether its qquery, mutation, subscription
+  operationName: string | undefined; // Name of operation
   operationString: string;
   variables: OperationVariables | undefined;
-  error: unknown;
-  warning: unknown[] | undefined;
-  result: IOperationResult[];
+  error: unknown; // Error object in case of failure
+  warning: unknown[] | undefined; // apollo client internal warning while reading data from cache
+  result: IOperationResult[]; // results of the operation.
+  optimisticResult?: IOperationResult;
   isOptimistic?: boolean;
-  affectedQueries: DocumentNode[];
+  affectedQueries: DocumentNode[]; // Re-rendered queries due to result of this operation
   isActive?: boolean;
-  duration?: IVerboseOperationDuration | undefined;
+  duration?: IVerboseOperationDuration | undefined; // amount of time spent in each phase
   fetchPolicy: WatchQueryFetchPolicy | undefined;
-  timing: ITiming | undefined;
+  timing: ITiming | undefined; // Time information relative to start recording at 0 seconds
+  status: OperationStatus;
+}
+
+export enum OperationStatus {
+  InFlight,
+  Succeded,
+  Failed,
+  PartialSuccess,
+  Unknown,
+}
+export enum InternalOperationStatus {
+  InFlight,
+  ResultFromCacheSucceded,
+  ResultFromNetworkSucceded,
+  FailedToGetResultFromNetwork,
 }
 
 export interface IVerboseOperationDuration {
@@ -162,6 +182,7 @@ export interface IVerboseOperationDuration {
 export interface IOperationResult {
   from: ResultsFrom;
   result: unknown;
+  size: number;
 }
 
 export const Not_Available = "Not Available";

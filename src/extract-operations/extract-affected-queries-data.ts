@@ -1,8 +1,6 @@
-/* eslint-disable msteams/no-eslint-disable */
-/* eslint-disable msteams/no-abusive-eslint-disable */
 import {
   IAffectedQueryMap,
-  IDebugOperation,
+  BaseOperation,
   IAffectedQuery,
   IVerboseOperationMap,
 } from "../interfaces";
@@ -14,7 +12,7 @@ export const extractAffectedQueriesData = (
 ) => {
   const affectedQueryToQueries: IAffectedQueryMap = {};
 
-  operations.forEach((operation: IDebugOperation, key: number) => {
+  operations.forEach((operation: BaseOperation, key: number) => {
     const { query, affectedQueries } = operation;
     const queryName: string = getOperationNameV2(query) as string;
 

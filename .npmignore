@@ -55,3 +55,10 @@ dist
 # parcel caching
 .parcel-cache/
 .DS_Store
+
+# source code
+src/
+index.ts
+.vscode/
+scripts/
+tsconfig.json

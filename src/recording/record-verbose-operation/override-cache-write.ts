@@ -8,7 +8,7 @@ import {
   SubscriptionOperation,
   DataId,
 } from "../../interfaces";
-import { RestrictedTimer } from "../../interfaces/restricted-timer";
+import { RestrictedTimer } from "../../interfaces";
 
 export const overrideCacheWrite = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
@@ -26,37 +26,18 @@ export const overrideCacheWrite = (
     rawData.enableDebug &&
       console.log(`APD operationId:${operationId} overrideCacheWrite`);
     if (operationId !== 0) {
-      setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-        const operation: QueryOperation | undefined = opMap.get(operationId) as
-          | QueryOperation
-          | undefined;
-
-        if (
-          operation &&
-          operation.operationStage === OperationStage.markResultExecution
-        ) {
-          operation.duration.cacheWriteStart = cacheWriteStart;
-          operation.duration.cacheWriteEnd = cacheWriteEnd;
-        }
-        operation?.setOperationStage(OperationStage.addedDataToCache);
-      });
+      addCacheTimeInformationToOperation(
+        setVerboseApolloOperations,
+        operationId,
+        cacheWriteStart,
+        cacheWriteEnd
+      );
     } else if (args[0].dataId === "ROOT_SUBSCRIPTION") {
-      setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-        const { query, result, variables } = args[0];
-        const operationId = ++rawData.operationIdCounter;
-        const operation = new SubscriptionOperation({
-          dataId: DataId.ROOT_SUBSCRIPTION,
-          query,
-          variables,
-          operationId,
-          debuggerEnabled: rawData.enableDebug || false,
-          errorPolicy: "none",
-          timer: new RestrictedTimer(rawData.timer),
-        });
-        operation.addResult(result);
-        operation.setOperationStage(OperationStage.addedDataToCache);
-        opMap.set(operationId, operation);
-      });
+      addCacheTimeInformationToSubscriptionOperation(
+        setVerboseApolloOperations,
+        args,
+        rawData
+      );
     }
     return result;
   };
@@ -64,4 +45,51 @@ export const overrideCacheWrite = (
   return () => {
     cache.write = originalWrite;
   };
+};
+
+const addCacheTimeInformationToSubscriptionOperation = (
+  setVerboseApolloOperations: ISetVerboseApolloOperations,
+  args: [Cache.WriteOptions<any, any>],
+  rawData: IApolloInspectorState
+) => {
+  setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+    const { query, result, variables } = args[0];
+    const operationId = ++rawData.operationIdCounter;
+    const operation = new SubscriptionOperation({
+      dataId: DataId.ROOT_SUBSCRIPTION,
+      query,
+      variables,
+      operationId,
+      debuggerEnabled: rawData.enableDebug || false,
+      errorPolicy: "none",
+      timer: new RestrictedTimer(rawData.timer),
+    });
+    operation.addResult(result);
+    operation.setOperationStage(OperationStage.addedDataToCache);
+    operation.addTimingInfo("dataWrittenToCacheCompletedAt");
+    opMap.set(operationId, operation);
+  });
+};
+
+const addCacheTimeInformationToOperation = (
+  setVerboseApolloOperations: ISetVerboseApolloOperations,
+  operationId: number,
+  cacheWriteStart: number,
+  cacheWriteEnd: number
+) => {
+  setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+    const operation: QueryOperation | undefined = opMap.get(operationId) as
+      | QueryOperation
+      | undefined;
+
+    if (
+      operation &&
+      operation.operationStage === OperationStage.markResultExecution
+    ) {
+      operation.duration.cacheWriteStart = cacheWriteStart;
+      operation.duration.cacheWriteEnd = cacheWriteEnd;
+      operation.addTimingInfo("dataWrittenToCacheCompletedAt");
+    }
+    operation?.setOperationStage(OperationStage.addedDataToCache);
+  });
 };

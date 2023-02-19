@@ -1,10 +1,9 @@
-import { WatchQueryFetchPolicy } from "@apollo/client";
 import { BaseOperation, IBaseOperationConstructor } from "./base-operation";
-import { IDiff } from "./apollo-client.interface";
 import {
   OperationStage,
   ResultsFrom,
   IVerboseOperation,
+  InternalOperationStatus,
   OperationStatus,
 } from "./apollo-inspector.interface";
 import { cloneDeep } from "lodash-es";
@@ -12,17 +11,12 @@ import { getOperationNameV2 } from "../apollo-inspector-utils";
 import { print } from "graphql";
 import sizeOf from "object-sizeof";
 
-export interface ISubscriptionOperationConstructor
+export interface IWriteQueryOperationConstructor
   extends IBaseOperationConstructor {}
 
-export class SubscriptionOperation extends BaseOperation {
-  private _operationStages: OperationStage[];
+export class WriteQueryOperation extends BaseOperation {
   private _operationStage: OperationStage;
-
-  public deduplication: boolean;
-  public diff: IDiff | undefined;
-  public piggyBackOnExistingObservable: boolean;
-  public fetchPolicy: WatchQueryFetchPolicy | "no-cache" | undefined;
+  private _operationStages: OperationStage[];
 
   constructor({
     dataId,
@@ -32,7 +26,7 @@ export class SubscriptionOperation extends BaseOperation {
     query,
     variables,
     timer,
-  }: ISubscriptionOperationConstructor) {
+  }: IWriteQueryOperationConstructor) {
     super({
       dataId,
       debuggerEnabled,
@@ -43,18 +37,12 @@ export class SubscriptionOperation extends BaseOperation {
       timer,
     });
 
-    this._operationStage = OperationStage.startGraphQLSubscription;
-    this._operationStages = [OperationStage.startGraphQLSubscription];
-    this.deduplication = true;
-    this.piggyBackOnExistingObservable = false;
-    const val = false;
+    this._operationStage = OperationStage.writeQuery;
+    this._operationStages = [OperationStage.writeQuery];
   }
 
-  public setOperationStage(opStage: OperationStage) {
-    this._operationStages.push(opStage);
-    if (opStage == OperationStage.addedDataToCache) {
-      this.timing.dataWrittenToCacheCompletedAt = this.timer.getCurrentMs();
-    }
+  public get operationStage() {
+    return this._operationStage;
   }
 
   public addResult(result: unknown) {
@@ -64,6 +52,7 @@ export class SubscriptionOperation extends BaseOperation {
       result: clonedResult,
       size: sizeOf(clonedResult),
     });
+    this.addStatus(InternalOperationStatus.ResultFromCacheSucceded);
   }
 
   public getOperationInfo(): IVerboseOperation {
@@ -80,17 +69,38 @@ export class SubscriptionOperation extends BaseOperation {
       affectedQueries: this._affectedQueries,
       isActive: this.active,
       error: this.error,
-      fetchPolicy: this.fetchPolicy,
+      fetchPolicy: undefined,
       warning: undefined,
       duration: {
-        totalTime: "NA",
+        totalTime: this.getTotalExecutionTime(),
         cacheWriteTime: this.getCacheWriteTime(),
         requestExecutionTime: "NA",
         cacheDiffTime: "NA",
         cacheBroadcastWatchesTime: "NA",
       },
       timing: this.timing,
-      status: OperationStatus.Succeded,
+      status: this.getOperationStatus(),
     };
+  }
+
+  public setOperationStage(opStage: OperationStage) {
+    this._operationStage = opStage;
+    this._operationStages.push(opStage);
+    if (opStage == OperationStage.addedDataToCache) {
+      this.timing.dataWrittenToCacheCompletedAt = this.timer.getCurrentMs();
+    }
+  }
+
+  protected getOperationStatus() {
+    if (this.status.includes(InternalOperationStatus.ResultFromCacheSucceded)) {
+      return OperationStatus.Succeded;
+    }
+
+    if (
+      this.status.includes(InternalOperationStatus.FailedToGetResultFromNetwork)
+    ) {
+      return OperationStatus.Failed;
+    }
+    return OperationStatus.Unknown;
   }
 }

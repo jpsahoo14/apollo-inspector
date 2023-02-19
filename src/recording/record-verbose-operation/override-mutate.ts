@@ -2,7 +2,6 @@ import {
   ApolloClient,
   NormalizedCacheObject,
   MutationOptions,
-  OperationVariables,
 } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
@@ -28,11 +27,11 @@ export const overrideMutate = (
     const {
       mutation,
       variables,
-      // optimisticResponse,
-      // updateQueries,
-      // refetchQueries = [],
-      // awaitRefetchQueries = false,
-      // update: updateWithProxyFn,
+      optimisticResponse,
+      updateQueries,
+      refetchQueries = [],
+      awaitRefetchQueries = false,
+      update: updateWithProxyFn,
       errorPolicy = "none",
       fetchPolicy,
       // context = {},
@@ -50,6 +49,10 @@ export const overrideMutate = (
         debuggerEnabled: rawData.enableDebug || false,
         errorPolicy,
         timer: new RestrictedTimer(rawData.timer),
+        optimisticResponse,
+        updateQueries,
+        refetchQueries,
+        awaitRefetchQueries,
       });
       opMap.set(operationId, mutateOperation);
     });

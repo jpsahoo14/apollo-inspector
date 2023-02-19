@@ -46,3 +46,26 @@ interface IDataView {
 ```
 
 One can read the list of operations from `operations`/`verboseOperations`/`allOperations`.
+
+For each verboseOperation, one can see all the below details
+
+```ts
+interface IVerboseOperation {
+  id: number; // operationId
+  operationType: OperationType; // Type of operation, whether its qquery, mutation, subscription
+  operationName: string | undefined; // Name of operation
+  operationString: string;
+  variables: OperationVariables | undefined;
+  error: unknown; // Error object in case of failure
+  warning: unknown[] | undefined; // apollo client internal warning while reading data from cache
+  result: IOperationResult[]; // results of the operation.
+  optimisticResult?: IOperationResult;
+  isOptimistic?: boolean;
+  affectedQueries: DocumentNode[]; // Re-rendered queries due to result of this operation
+  isActive?: boolean;
+  duration?: IVerboseOperationDuration | undefined; // amount of time spent in each phase
+  fetchPolicy: WatchQueryFetchPolicy | undefined;
+  timing: ITiming | undefined; // Time information relative to start recording at 0 seconds
+  status: OperationStatus;
+}
+```

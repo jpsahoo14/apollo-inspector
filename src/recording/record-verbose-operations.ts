@@ -3,7 +3,7 @@ import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IInspectorTrackingConfig,
-  IDebugOperation,
+  BaseOperation,
 } from "../interfaces";
 import {
   overrideFetchQueryByPolicy,

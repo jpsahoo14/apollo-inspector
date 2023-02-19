@@ -1,5 +1,10 @@
 import { OperationDefinitionNode, DocumentNode } from "graphql";
-import { IInspectorTrackingConfig, IApolloInspectorState } from "./interfaces";
+import {
+  IInspectorTrackingConfig,
+  IApolloInspectorState,
+  IApolloClient,
+} from "./interfaces";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 
 export const getOperationName = (query: DocumentNode) => {
   const definition =
@@ -51,4 +56,19 @@ export const resumeOperation = (
   const result = cb();
   rawData.currentOperationId = oldCurrentOperationId;
   return result;
+};
+
+export const getAffectedQueries = (
+  client: ApolloClient<NormalizedCacheObject>
+) => {
+  const watchQueries = (client as unknown as IApolloClient).queryManager
+    .queries;
+  const affectedQueries = [];
+  for (const [_key, value] of watchQueries) {
+    if (value.dirty === true) {
+      affectedQueries.push(value.document);
+    }
+  }
+
+  return affectedQueries;
 };

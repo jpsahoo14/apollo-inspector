@@ -35,10 +35,10 @@ export const overrideFetchQueryObservable = (
         apolloClient as unknown as IApolloClient
       ).queryManager.getQuery(queryId);
 
-      const nextId = ++rawData.operationIdCounter;
+      const nextOperationId = ++rawData.operationIdCounter;
       rawData.enableDebug &&
         console.log(
-          `APD operationId:${nextId} fetchQueryObservable start queryId:${queryId}`
+          `APD operationId:${nextOperationId} fetchQueryObservable start queryId:${queryId}`
         );
       setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
         const queryOp = new QueryOperation({
@@ -46,13 +46,13 @@ export const overrideFetchQueryObservable = (
           queryInfo,
           variables: options.variables,
           query: options.query,
-          operationId: nextId,
+          operationId: nextOperationId,
           fetchPolicy,
           debuggerEnabled: rawData.enableDebug || false,
           errorPolicy,
           timer: new RestrictedTimer(rawData.timer),
         });
-        opMap.set(nextId, queryOp);
+        opMap.set(nextOperationId, queryOp);
         if (
           rawData.enableDebug &&
           rawData.queryInfoToOperationId.get(queryInfo)
@@ -61,13 +61,13 @@ export const overrideFetchQueryObservable = (
             console.log(
               `APD operationId:${
                 rawData.queryInfoToOperationId.get(queryInfo)?.id
-              } currentOperationId:${nextId} queryId:${queryId} `
+              } currentOperationId:${nextOperationId} queryId:${queryId} `
             );
           debugger;
         }
         rawData.queryInfoToOperationId.set(queryInfo, queryOp);
       });
-      rawData.currentOperationId = nextId;
+      rawData.currentOperationId = nextOperationId;
       const observable = originalFetchQueryObservable.apply(this, args);
       rawData.currentOperationId = 0;
 
@@ -75,21 +75,23 @@ export const overrideFetchQueryObservable = (
         next: (result: unknown) => {
           rawData.enableDebug &&
             console.log(
-              `APD operationId:${nextId} fetchQueryObservable next`,
+              `APD operationId:${nextOperationId} fetchQueryObservable next`,
               result
             );
 
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-            const op = opMap.get(nextId) as QueryOperation | undefined;
+            const op = opMap.get(nextOperationId) as QueryOperation | undefined;
             op?.addResult(result);
           });
         },
         error: (error: unknown) => {
           rawData.enableDebug &&
-            console.log(`APD operationId:${nextId} fetchQueryObservable error`);
+            console.log(
+              `APD operationId:${nextOperationId} fetchQueryObservable error`
+            );
 
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-            const op = opMap.get(nextId);
+            const op = opMap.get(nextOperationId);
             op?.addError(error);
           });
           subscription.unsubscribe();
@@ -97,12 +99,12 @@ export const overrideFetchQueryObservable = (
         complete: () => {
           rawData.enableDebug &&
             console.log(
-              `APD operationId:${nextId} fetchQueryObservable complete`
+              `APD operationId:${nextOperationId} fetchQueryObservable complete`
             );
 
           subscription && subscription.unsubscribe();
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-            const op = opMap.get(nextId);
+            const op = opMap.get(nextOperationId);
             op?.setInActive();
           });
         },
@@ -112,21 +114,23 @@ export const overrideFetchQueryObservable = (
         .then((result: unknown) => {
           rawData.enableDebug &&
             console.log(
-              `APD operationId:${nextId} fetchQueryObservable then`,
+              `APD operationId:${nextOperationId} fetchQueryObservable then`,
               result
             );
 
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-            const op = opMap.get(nextId);
+            const op = opMap.get(nextOperationId);
             op && (op.duration.operationExecutionEndTime = performance.now());
           });
         })
         .catch(() => {
           rawData.enableDebug &&
-            console.log(`APD operationId:${nextId} fetchQueryObservable catch`);
+            console.log(
+              `APD operationId:${nextOperationId} fetchQueryObservable catch`
+            );
 
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-            const op = opMap.get(nextId);
+            const op = opMap.get(nextOperationId);
             op && (op.duration.operationExecutionEndTime = performance.now());
           });
         });
