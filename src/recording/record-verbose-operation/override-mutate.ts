@@ -38,7 +38,6 @@ export const overrideMutate = (
     } = options;
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const mutateOperation = new MutationOperation({
-        dataId: DataId.ROOT_MUTATION,
         variables,
         query: mutation,
         operationId,

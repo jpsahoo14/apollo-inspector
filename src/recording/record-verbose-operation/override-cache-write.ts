@@ -56,7 +56,6 @@ const addCacheTimeInformationToSubscriptionOperation = (
     const { query, result, variables } = args[0];
     const operationId = ++rawData.operationIdCounter;
     const operation = new SubscriptionOperation({
-      dataId: DataId.ROOT_SUBSCRIPTION,
       query,
       variables,
       operationId,

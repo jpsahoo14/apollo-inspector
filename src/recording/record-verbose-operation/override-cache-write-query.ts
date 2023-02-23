@@ -34,4 +34,8 @@ export const overrideCacheWriteQuery = (
 
     return result;
   };
+
+  return () => {
+    cache.writeQuery = originalWriteQuery;
+  };
 };

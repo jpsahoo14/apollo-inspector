@@ -1,4 +1,8 @@
-import { OperationDefinitionNode, DocumentNode } from "graphql";
+import {
+  OperationDefinitionNode,
+  DocumentNode,
+  getOperationAST,
+} from "graphql";
 import {
   IInspectorTrackingConfig,
   IApolloInspectorState,
@@ -17,20 +21,13 @@ export const getOperationName = (query: DocumentNode) => {
 };
 
 export function getOperationNameV2(doc: DocumentNode): string {
-  const name =
-    doc.definitions
-      .filter(
-        (definition) =>
-          definition.kind === "OperationDefinition" && definition.name
-      )
-      .map((x: OperationDefinitionNode) => x?.name?.value)[0] ||
-    "name_not_found_v2";
+  const name = getOperationAST(doc);
 
   if (!name) {
     console.log(`no name for query ${doc}`);
   }
 
-  return name;
+  return name?.name?.value || "Name_Not_Found";
 }
 
 export const copyToClipboard = async (obj: unknown) => {

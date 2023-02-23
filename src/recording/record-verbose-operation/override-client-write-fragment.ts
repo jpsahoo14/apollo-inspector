@@ -8,7 +8,6 @@ import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IVerboseOperationMap,
-  DataId,
   WriteFragmentOperation,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces";
@@ -43,7 +42,6 @@ export const overrideClientWriteFragment = (
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const writeFragmentOp = new WriteFragmentOperation({
-        dataId: DataId.WRITE_QUERY,
         debuggerEnabled: rawData.enableDebug || false,
         errorPolicy: undefined,
         operationId: nextOperationId,
@@ -60,6 +58,20 @@ export const overrideClientWriteFragment = (
     const result = originalWriteFragment.apply(this, args);
     rawData.currentOperationId = 0;
 
+    setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+      const operation: WriteFragmentOperation | undefined = opMap.get(
+        nextOperationId
+      ) as WriteFragmentOperation | undefined;
+
+      if (operation) {
+        operation.duration.operationExecutionEndTime = performance.now();
+      }
+    });
+
     return result;
+  };
+
+  return () => {
+    apolloClient.writeFragment = originalWriteFragment;
   };
 };

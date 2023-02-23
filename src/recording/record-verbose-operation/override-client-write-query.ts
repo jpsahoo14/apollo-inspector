@@ -1,19 +1,15 @@
 import {
   ApolloClient,
   NormalizedCacheObject,
-  Cache,
   OperationVariables,
   DataProxy,
 } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
-  OperationStage,
   IVerboseOperationMap,
-  QueryOperation,
-  SubscriptionOperation,
-  DataId,
   WriteQueryOperation,
+  BaseOperation,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces";
 
@@ -39,13 +35,12 @@ export const overrideClientWriteQuery = (
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const writeQueryOp = new WriteQueryOperation({
-        dataId: DataId.WRITE_QUERY,
         debuggerEnabled: rawData.enableDebug || false,
         errorPolicy: undefined,
         operationId: nextOperationId,
         query,
         timer: new RestrictedTimer(rawData.timer),
-        variables,
+        variables: variables as OperationVariables,
       });
       writeQueryOp.addResult(data);
 
@@ -56,6 +51,28 @@ export const overrideClientWriteQuery = (
     const result = originalWriteQuery.apply(this, args);
     rawData.currentOperationId = 0;
 
+    updateOperationEndExecutionTime(
+      setVerboseApolloOperations,
+      nextOperationId
+    );
     return result;
   };
+
+  return () => {
+    apolloClient.writeQuery = originalWriteQuery;
+  };
 };
+function updateOperationEndExecutionTime(
+  setVerboseApolloOperations: ISetVerboseApolloOperations,
+  nextOperationId: number
+) {
+  setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+    const operation: BaseOperation | undefined = opMap.get(nextOperationId) as
+      | BaseOperation
+      | undefined;
+
+    if (operation) {
+      operation.duration.operationExecutionEndTime = performance.now();
+    }
+  });
+}

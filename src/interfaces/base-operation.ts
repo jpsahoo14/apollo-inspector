@@ -198,6 +198,12 @@ export class BaseOperation implements IBaseOperation {
       case DataId.ROOT_SUBSCRIPTION: {
         return OperationType.Subscription;
       }
+      case DataId.WRITE_FRAGMENT: {
+        return OperationType.WriteFragment;
+      }
+      case DataId.WRITE_QUERY: {
+        return OperationType.WriteQuery;
+      }
     }
     return OperationType.Unknown;
   }

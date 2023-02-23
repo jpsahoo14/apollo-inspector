@@ -35,4 +35,8 @@ export const overrideCacheWriteFragment = (
 
     return result;
   };
+
+  return () => {
+    cache.writeFragment = originalWriteFragment;
+  };
 };

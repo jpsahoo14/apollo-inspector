@@ -14,6 +14,7 @@ import {
   IVerboseOperation,
   InternalOperationStatus,
   OperationStatus,
+  DataId,
 } from "./apollo-inspector.interface";
 import { cloneDeep } from "lodash-es";
 import { getOperationNameV2 } from "../apollo-inspector-utils";
@@ -22,7 +23,7 @@ import { MutationFetchPolicy } from "./apollo-client.interface";
 import sizeOf from "object-sizeof";
 
 export interface IMutationOperationConstructor
-  extends IBaseOperationConstructor {
+  extends Omit<IBaseOperationConstructor, "dataId"> {
   fetchPolicy: MutationFetchPolicy;
   optimisticResponse: unknown | ((vars: OperationVariables) => unknown);
   updateQueries?: MutationQueryReducersMap<unknown>;
@@ -47,7 +48,6 @@ export class MutationOperation extends BaseOperation {
   public fetchPolicy: MutationFetchPolicy;
 
   constructor({
-    dataId,
     debuggerEnabled,
     errorPolicy,
     fetchPolicy,
@@ -62,7 +62,7 @@ export class MutationOperation extends BaseOperation {
     updateQueries,
   }: IMutationOperationConstructor) {
     super({
-      dataId,
+      dataId: DataId.ROOT_MUTATION,
       debuggerEnabled,
       errorPolicy,
       operationId,
@@ -115,8 +115,8 @@ export class MutationOperation extends BaseOperation {
         totalTime: this.getTotalExecutionTime(),
         cacheWriteTime: this.getCacheWriteTime(),
         requestExecutionTime: "NA",
-        cacheDiffTime: "NA",
-        cacheBroadcastWatchesTime: "NA",
+        cacheDiffTime: NaN,
+        cacheBroadcastWatchesTime: NaN,
       },
       timing: this.timing,
       status: this.getOperationStatus(),

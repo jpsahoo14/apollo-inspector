@@ -5,6 +5,7 @@ import {
   IVerboseOperation,
   InternalOperationStatus,
   OperationStatus,
+  DataId,
 } from "./apollo-inspector.interface";
 import { cloneDeep } from "lodash-es";
 import { getOperationNameV2 } from "../apollo-inspector-utils";
@@ -12,14 +13,13 @@ import { print } from "graphql";
 import sizeOf from "object-sizeof";
 
 export interface IWriteQueryOperationConstructor
-  extends IBaseOperationConstructor {}
+  extends Omit<IBaseOperationConstructor, "dataId"> {}
 
 export class WriteQueryOperation extends BaseOperation {
   private _operationStage: OperationStage;
   private _operationStages: OperationStage[];
 
   constructor({
-    dataId,
     debuggerEnabled,
     errorPolicy,
     operationId,
@@ -28,7 +28,7 @@ export class WriteQueryOperation extends BaseOperation {
     timer,
   }: IWriteQueryOperationConstructor) {
     super({
-      dataId,
+      dataId: DataId.WRITE_QUERY,
       debuggerEnabled,
       errorPolicy,
       operationId,
@@ -75,8 +75,8 @@ export class WriteQueryOperation extends BaseOperation {
         totalTime: this.getTotalExecutionTime(),
         cacheWriteTime: this.getCacheWriteTime(),
         requestExecutionTime: "NA",
-        cacheDiffTime: "NA",
-        cacheBroadcastWatchesTime: "NA",
+        cacheDiffTime: NaN,
+        cacheBroadcastWatchesTime: NaN,
       },
       timing: this.timing,
       status: this.getOperationStatus(),

@@ -8,3 +8,7 @@ export * from "./override-cache-write";
 export * from "./override-mutate";
 export * from "./override-mark-mutation-result";
 export * from "./override-get-observable-from-link";
+export * from "./override-cache-write-fragment";
+export * from "./override-cache-write-query";
+export * from "./override-client-write-fragment";
+export * from "./override-client-write-query";

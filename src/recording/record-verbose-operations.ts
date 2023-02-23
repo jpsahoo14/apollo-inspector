@@ -14,6 +14,10 @@ import {
   overrideCacheWrite,
   overrideMutate,
   overrideGetObservableFromLink,
+  overrideCacheWriteFragment,
+  overrideCacheWriteQuery,
+  overrideClientWriteFragment,
+  overrideClientWriteQuery,
 } from "./record-verbose-operation";
 import { trackLink, setLinkInFront } from "../links";
 
@@ -25,7 +29,11 @@ export const recordVerboseOperations = (
 ) => {
   const selectedApolloClient: ApolloClient<NormalizedCacheObject> = client;
 
-  const methods = [
+  const methods: ((
+    apolloClient: ApolloClient<NormalizedCacheObject>,
+    rawData: IApolloInspectorState,
+    setVerboseApolloOperations: ISetVerboseApolloOperations
+  ) => () => void)[] = [
     overrideFetchQueryObservable,
     overrideQueryInfoMarkResult,
     overrideFetchQueryByPolicy,
@@ -34,6 +42,10 @@ export const recordVerboseOperations = (
     overrideCacheWrite,
     overrideMutate,
     overrideGetObservableFromLink,
+    overrideCacheWriteFragment,
+    overrideCacheWriteQuery,
+    overrideClientWriteFragment,
+    overrideClientWriteQuery,
   ];
   const revertMethods: (() => void)[] = [];
   methods.forEach((m) => {

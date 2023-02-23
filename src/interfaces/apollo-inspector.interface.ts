@@ -110,6 +110,8 @@ export enum OperationType {
   Mutation = "Mutation",
   Subscription = "Subscription",
   Fragment = "Fragment",
+  WriteQuery = "WriteQuery",
+  WriteFragment = "WriteFragment",
   Unknown = "Unknown",
 }
 
@@ -159,25 +161,25 @@ export interface IVerboseOperation {
 }
 
 export enum OperationStatus {
-  InFlight,
-  Succeded,
-  Failed,
-  PartialSuccess,
-  Unknown,
+  InFlight = "InFlight",
+  Succeded = "Succeded",
+  Failed = "Failed",
+  PartialSuccess = "PartialSuccess",
+  Unknown = "Unknown",
 }
 export enum InternalOperationStatus {
-  InFlight,
-  ResultFromCacheSucceded,
-  ResultFromNetworkSucceded,
-  FailedToGetResultFromNetwork,
+  InFlight = "InFlight",
+  ResultFromCacheSucceded = "ResultFromCacheSucceded",
+  ResultFromNetworkSucceded = "ResultFromNetworkSucceded",
+  FailedToGetResultFromNetwork = "FailedToGetResultFromNetwork",
 }
 
 export interface IVerboseOperationDuration {
-  totalTime: DOMHighResTimeStamp | string;
+  totalTime: DOMHighResTimeStamp;
   requestExecutionTime: DOMHighResTimeStamp | string;
-  cacheWriteTime: DOMHighResTimeStamp | string;
-  cacheDiffTime: DOMHighResTimeStamp | string;
-  cacheBroadcastWatchesTime: DOMHighResTimeStamp | string;
+  cacheWriteTime: DOMHighResTimeStamp;
+  cacheDiffTime: DOMHighResTimeStamp;
+  cacheBroadcastWatchesTime: DOMHighResTimeStamp;
 }
 export interface IOperationResult {
   from: ResultsFrom;

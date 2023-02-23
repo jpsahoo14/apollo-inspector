@@ -6,6 +6,7 @@ import {
   ResultsFrom,
   IVerboseOperation,
   OperationStatus,
+  DataId,
 } from "./apollo-inspector.interface";
 import { cloneDeep } from "lodash-es";
 import { getOperationNameV2 } from "../apollo-inspector-utils";
@@ -13,7 +14,7 @@ import { print } from "graphql";
 import sizeOf from "object-sizeof";
 
 export interface ISubscriptionOperationConstructor
-  extends IBaseOperationConstructor {}
+  extends Omit<IBaseOperationConstructor, "dataId"> {}
 
 export class SubscriptionOperation extends BaseOperation {
   private _operationStages: OperationStage[];
@@ -25,7 +26,6 @@ export class SubscriptionOperation extends BaseOperation {
   public fetchPolicy: WatchQueryFetchPolicy | "no-cache" | undefined;
 
   constructor({
-    dataId,
     debuggerEnabled,
     errorPolicy,
     operationId,
@@ -34,7 +34,7 @@ export class SubscriptionOperation extends BaseOperation {
     timer,
   }: ISubscriptionOperationConstructor) {
     super({
-      dataId,
+      dataId: DataId.ROOT_SUBSCRIPTION,
       debuggerEnabled,
       errorPolicy,
       operationId,
@@ -83,11 +83,11 @@ export class SubscriptionOperation extends BaseOperation {
       fetchPolicy: this.fetchPolicy,
       warning: undefined,
       duration: {
-        totalTime: "NA",
+        totalTime: NaN,
         cacheWriteTime: this.getCacheWriteTime(),
-        requestExecutionTime: "NA",
-        cacheDiffTime: "NA",
-        cacheBroadcastWatchesTime: "NA",
+        requestExecutionTime: NaN,
+        cacheDiffTime: NaN,
+        cacheBroadcastWatchesTime: NaN,
       },
       timing: this.timing,
       status: OperationStatus.Succeded,

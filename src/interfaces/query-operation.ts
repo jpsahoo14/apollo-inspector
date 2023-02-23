@@ -3,9 +3,9 @@ import {
   OperationStage,
   ResultsFrom,
   IVerboseOperation,
-  Not_Available,
   InternalOperationStatus,
   OperationStatus,
+  DataId,
 } from "./apollo-inspector.interface";
 import { IDiff } from "./apollo-client.interface";
 import { print } from "graphql";
@@ -14,7 +14,8 @@ import { getOperationNameV2 } from "../apollo-inspector-utils";
 import { cloneDeep } from "lodash-es";
 import sizeOf from "object-sizeof";
 
-export interface IQueryOperationConstructor extends IBaseOperationConstructor {
+export interface IQueryOperationConstructor
+  extends Omit<IBaseOperationConstructor, "dataId"> {
   queryInfo: unknown;
   fetchPolicy: WatchQueryFetchPolicy | "no-cache" | undefined;
 }
@@ -30,7 +31,6 @@ export class QueryOperation extends BaseOperation {
   public fetchPolicy: WatchQueryFetchPolicy | "no-cache" | undefined;
 
   constructor({
-    dataId,
     debuggerEnabled,
     errorPolicy,
     fetchPolicy,
@@ -41,7 +41,7 @@ export class QueryOperation extends BaseOperation {
     timer,
   }: IQueryOperationConstructor) {
     super({
-      dataId,
+      dataId: DataId.ROOT_QUERY,
       debuggerEnabled,
       errorPolicy,
       operationId,
@@ -345,7 +345,7 @@ export class QueryOperation extends BaseOperation {
 
     return (
       this.duration.totalResovlerTime ||
-      (this.piggyBackOnExistingObservable ? "Multiplexed" : Not_Available)
+      (this.piggyBackOnExistingObservable ? "Multiplexed" : NaN)
     );
   };
 
@@ -361,7 +361,7 @@ export class QueryOperation extends BaseOperation {
       }
     }
 
-    return this.duration.totalCacheDiffTime || Not_Available;
+    return this.duration.totalCacheDiffTime || NaN;
   };
 
   private getCacheBroadcastWatchesTime = () => {
@@ -381,6 +381,6 @@ export class QueryOperation extends BaseOperation {
       }
     }
 
-    return this.duration.totalCacheBroadcastWatchesTime || Not_Available;
+    return this.duration.totalCacheBroadcastWatchesTime || NaN;
   };
 }

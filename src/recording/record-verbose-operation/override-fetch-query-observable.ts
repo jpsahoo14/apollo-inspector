@@ -42,7 +42,6 @@ export const overrideFetchQueryObservable = (
         );
       setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
         const queryOp = new QueryOperation({
-          dataId: DataId.ROOT_QUERY,
           queryInfo,
           variables: options.variables,
           query: options.query,

@@ -12,6 +12,7 @@ export const extractOperations = (
   rawData: IApolloInspectorState,
   config: IInspectorTrackingConfig
 ) => {
+  console.log({ rawData });
   const result: IDataView = {
     affectedQueriesOperations: null,
     allOperations: null,
