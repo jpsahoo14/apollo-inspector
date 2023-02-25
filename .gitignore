@@ -50,8 +50,11 @@ node_modules/
 .cache
 
 # distribution folder
-dist
+dist/*
 
 # parcel caching
 .parcel-cache/
 .DS_Store
+
+# npm pack output
+package/*
