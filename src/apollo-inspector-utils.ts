@@ -21,13 +21,13 @@ export const getOperationName = (query: DocumentNode) => {
 };
 
 export function getOperationNameV2(doc: DocumentNode): string {
-  const name = getOperationAST(doc);
+  const node = getOperationAST(doc);
 
-  if (!name) {
+  if (!node) {
     console.log(`no name for query ${doc}`);
   }
 
-  return name?.name?.value || "Name_Not_Found";
+  return node?.name?.value || "Name_Not_Found";
 }
 
 export const copyToClipboard = async (obj: unknown) => {

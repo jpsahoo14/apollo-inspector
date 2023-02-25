@@ -5,7 +5,7 @@ import {
   OperationType,
   DataId,
 } from "../interfaces";
-import { getOperationName } from "../apollo-inspector-utils";
+import { getOperationNameV2 } from "../apollo-inspector-utils";
 
 export const extractAllOperationsData = (operations: {
   [key: number]: IApolloOperation;
@@ -33,7 +33,7 @@ const getOperation = ({
 
   const operationString = print(data.query);
 
-  const operationName = getOperationName(query);
+  const operationName = getOperationNameV2(query);
 
   return {
     operationType,
