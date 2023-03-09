@@ -62,3 +62,6 @@ index.ts
 .vscode/
 scripts/
 tsconfig.json
+
+# npm pack
+package/*

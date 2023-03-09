@@ -1,4 +1,5 @@
 import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
+import { getAffectedQueries } from "../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
@@ -17,20 +18,21 @@ export const overrideMarkMutationResult = (
     .queryManager.markMutationResult;
 
   (apolloClient as unknown as IApolloClient).queryManager.markMutationResult =
-    function override(...args: IMarkMutationResultArgs) {
+    async function override(...args: IMarkMutationResultArgs) {
       const [mutation, cache] = args;
 
       const { result } = mutation;
       const newResult = result as { operationId: number };
       const operationId = newResult.operationId;
+      const promise = await originalMarkMutationResult.apply(this, args);
       setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-        const op = opMap.get(operationId) as QueryOperation | undefined;
-        if (op) {
-          op.addResult(result);
+        const operation = opMap.get(operationId);
+        if (operation) {
+          const affectedQueries = getAffectedQueries(apolloClient);
+          operation.addAffectedQueries(affectedQueries);
         }
       });
 
-      const promise = originalMarkMutationResult.apply(this, args);
       return promise;
     };
 

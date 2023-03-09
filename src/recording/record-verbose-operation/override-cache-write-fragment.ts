@@ -10,6 +10,9 @@ import {
   IVerboseOperationMap,
 } from "../../interfaces";
 import { getAffectedQueries } from "../../apollo-inspector-utils";
+import { CacheWriteFragmentOperation } from "../../interfaces/cache-write-fragment-operation";
+import { RestrictedTimer } from "../../interfaces";
+import { DocumentNode } from "graphql";
 
 export const overrideCacheWriteFragment = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
@@ -23,6 +26,43 @@ export const overrideCacheWriteFragment = (
     TData,
     TVariables = OperationVariables
   >(...args: [Cache.WriteFragmentOptions<TData, TVariables>]) {
+    const options = args[0];
+    const {
+      data,
+      fragment,
+      broadcast,
+      id,
+      overwrite,
+      variables,
+      fragmentName,
+    } = options;
+
+    if (rawData.currentOperationId === 0) {
+      // Create new operation
+      const nextOperationId = ++rawData.operationIdCounter;
+      const writeFragmentOp = getOperation<TData, TVariables>(
+        rawData,
+        nextOperationId,
+        fragment,
+        variables,
+        fragmentName
+      );
+      writeFragmentOp.addResult(data);
+
+      // set current operationId to new operationId
+      rawData.currentOperationId = nextOperationId;
+      const result = originalWriteFragment.apply(this, args);
+      rawData.currentOperationId = 0;
+
+      setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+        // add the operation to map
+        writeFragmentOp.duration.operationExecutionEndTime = performance.now();
+        opMap.set(nextOperationId, writeFragmentOp);
+      });
+
+      return result;
+    }
+
     const result = originalWriteFragment.apply(this, args);
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
@@ -40,3 +80,19 @@ export const overrideCacheWriteFragment = (
     cache.writeFragment = originalWriteFragment;
   };
 };
+const getOperation = <TData, TVariables>(
+  rawData: IApolloInspectorState,
+  nextOperationId: number,
+  fragment: DocumentNode,
+  variables: TVariables | undefined,
+  fragmentName: string | undefined
+) =>
+  new CacheWriteFragmentOperation({
+    debuggerEnabled: rawData.enableDebug || false,
+    errorPolicy: undefined,
+    operationId: nextOperationId,
+    query: fragment,
+    timer: new RestrictedTimer(rawData.timer),
+    variables: variables as OperationVariables,
+    fragmentName: fragmentName || "unknown_fragment_name",
+  });

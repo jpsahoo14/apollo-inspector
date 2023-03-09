@@ -110,8 +110,14 @@ export enum OperationType {
   Mutation = "Mutation",
   Subscription = "Subscription",
   Fragment = "Fragment",
-  WriteQuery = "WriteQuery",
-  WriteFragment = "WriteFragment",
+  ClientWriteQuery = "ClientWriteQuery",
+  ClientWriteFragment = "ClientWriteFragment",
+  CacheWriteQuery = "CacheWriteQuery",
+  CacheWriteFragment = "CacheWriteFragment",
+  ClientReadQuery = "ClientReadQuery",
+  ClientReadFragment = "ClientReadFragment",
+  CacheReadQuery = "CacheReadQuery",
+  CacheReadFragment = "CacheReadFragment",
   Unknown = "Unknown",
 }
 
@@ -120,8 +126,14 @@ export enum DataId {
   ROOT_MUTATION = "ROOT_MUTATION",
   ROOT_OPTIMISTIC_MUTATION = "ROOT_OPTIMISTIC_MUTATION",
   ROOT_SUBSCRIPTION = "ROOT_SUBSCRIPTION",
-  WRITE_QUERY = "WRITE_QUERY",
-  WRITE_FRAGMENT = "WRITE_FRAGMENT",
+  CLIENT_WRITE_QUERY = "CLIENT_WRITE_QUERY",
+  CLIENT_WRITE_FRAGMENT = "CLIENT_WRITE_FRAGMENT",
+  CACHE_WRITE_QUERY = "CACHE_WRITE_QUERY",
+  CACHE_WRITE_FRAGMENT = "CACHE_WRITE_FRAGMENT",
+  CLIENT_READ_QUERY = "CLIENT_READ_QUERY",
+  CLIENT_READ_FRAGMENT = "CLIENT_READ_FRAGMENT",
+  CACHE_READ_QUERY = "CACHE_READ_QUERY",
+  CACHE_READ_FRAGMENT = "CACHE_READ_FRAGMENT",
 }
 
 export interface IMutation {

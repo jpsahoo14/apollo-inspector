@@ -18,6 +18,11 @@ import {
   overrideCacheWriteQuery,
   overrideClientWriteFragment,
   overrideClientWriteQuery,
+  overrideCacheReadFragment,
+  overrideCacheReadQuery,
+  overrideClientReadFragment,
+  overrideClientReadQuery,
+  overrideMarkMutationResult,
 } from "./record-verbose-operation";
 import { trackLink, setLinkInFront } from "../links";
 
@@ -46,6 +51,11 @@ export const recordVerboseOperations = (
     overrideCacheWriteQuery,
     overrideClientWriteFragment,
     overrideClientWriteQuery,
+    overrideCacheReadFragment,
+    overrideCacheReadQuery,
+    overrideClientReadFragment,
+    overrideClientReadQuery,
+    overrideMarkMutationResult,
   ];
   const revertMethods: (() => void)[] = [];
   methods.forEach((m) => {

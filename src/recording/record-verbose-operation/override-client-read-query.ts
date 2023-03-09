@@ -8,62 +8,50 @@ import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IVerboseOperationMap,
-  ClientWriteFragmentOperation,
+  ClientReadQueryOperation,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces";
 
-export const overrideClientWriteFragment = (
+export const overrideClientReadQuery = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
-  const originalWriteFragment = apolloClient.writeFragment;
+  const originalReadQuery = apolloClient.readQuery;
 
-  apolloClient.writeFragment = function override<
-    TData,
+  apolloClient.readQuery = function override<
+    T = any,
     TVariables = OperationVariables
-  >(...args: [DataProxy.WriteFragmentOptions<TData, TVariables>]) {
+  >(...args: [DataProxy.Query<TVariables, T>]) {
     const options = args[0];
-    const {
-      data,
-      fragment,
-      broadcast,
-      id,
-      overwrite,
-      variables,
-      fragmentName,
-    } = options;
+    const { query, id, variables } = options;
 
     const nextOperationId = ++rawData.operationIdCounter;
     rawData.enableDebug &&
       console.log(
-        `APD operationid:${nextOperationId} apolloClient.writeFragment start`
+        `APD operationid:${nextOperationId} apolloClient.readQuery start`
       );
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-      const writeFragmentOp = new ClientWriteFragmentOperation({
+      const readQueryOp = new ClientReadQueryOperation({
         debuggerEnabled: rawData.enableDebug || false,
         errorPolicy: undefined,
         operationId: nextOperationId,
-        query: fragment,
+        query,
         timer: new RestrictedTimer(rawData.timer),
         variables: variables as OperationVariables,
-        fragmentName: fragmentName || "",
       });
-      writeFragmentOp.addResult(data);
-      opMap.set(nextOperationId, writeFragmentOp);
+      opMap.set(nextOperationId, readQueryOp);
     });
 
     rawData.currentOperationId = nextOperationId;
-    const result = originalWriteFragment.apply(this, args);
+    const result = originalReadQuery.apply(this, args);
     rawData.currentOperationId = 0;
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-      const operation: ClientWriteFragmentOperation | undefined = opMap.get(
-        nextOperationId
-      ) as ClientWriteFragmentOperation | undefined;
-
+      const operation = opMap.get(nextOperationId);
       if (operation) {
+        operation.addResult(result);
         operation.duration.operationExecutionEndTime = performance.now();
       }
     });
@@ -72,6 +60,6 @@ export const overrideClientWriteFragment = (
   };
 
   return () => {
-    apolloClient.writeFragment = originalWriteFragment;
+    apolloClient.readQuery = originalReadQuery;
   };
 };

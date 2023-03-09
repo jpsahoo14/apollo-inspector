@@ -6,7 +6,6 @@ import {
 } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
-  DataId,
   IApolloInspectorState,
   IApolloClient,
   IFetchQueryObservableParams,

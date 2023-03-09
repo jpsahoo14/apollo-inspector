@@ -198,11 +198,30 @@ export class BaseOperation implements IBaseOperation {
       case DataId.ROOT_SUBSCRIPTION: {
         return OperationType.Subscription;
       }
-      case DataId.WRITE_FRAGMENT: {
-        return OperationType.WriteFragment;
+      case DataId.CLIENT_WRITE_QUERY: {
+        return OperationType.ClientWriteQuery;
       }
-      case DataId.WRITE_QUERY: {
-        return OperationType.WriteQuery;
+      case DataId.CLIENT_WRITE_FRAGMENT: {
+        return OperationType.ClientWriteFragment;
+      }
+      case DataId.CACHE_WRITE_QUERY: {
+        return OperationType.CacheWriteQuery;
+      }
+      case DataId.CACHE_WRITE_FRAGMENT: {
+        return OperationType.CacheWriteFragment;
+      }
+
+      case DataId.CLIENT_READ_QUERY: {
+        return OperationType.ClientReadQuery;
+      }
+      case DataId.CLIENT_READ_FRAGMENT: {
+        return OperationType.ClientReadFragment;
+      }
+      case DataId.CACHE_READ_QUERY: {
+        return OperationType.CacheReadQuery;
+      }
+      case DataId.CACHE_READ_FRAGMENT: {
+        return OperationType.CacheReadFragment;
       }
     }
     return OperationType.Unknown;

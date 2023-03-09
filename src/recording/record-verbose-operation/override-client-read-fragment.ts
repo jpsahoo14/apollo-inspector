@@ -8,62 +8,53 @@ import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IVerboseOperationMap,
-  ClientWriteFragmentOperation,
+  ClientReadFragmentOperation,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces";
 
-export const overrideClientWriteFragment = (
+export const overrideClientReadFragment = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
-  const originalWriteFragment = apolloClient.writeFragment;
+  const originalReadFragment = apolloClient.readFragment;
 
-  apolloClient.writeFragment = function override<
-    TData,
+  apolloClient.readFragment = function override<
+    T = any,
     TVariables = OperationVariables
-  >(...args: [DataProxy.WriteFragmentOptions<TData, TVariables>]) {
+  >(...args: [DataProxy.Fragment<TVariables, T>]) {
     const options = args[0];
-    const {
-      data,
-      fragment,
-      broadcast,
-      id,
-      overwrite,
-      variables,
-      fragmentName,
-    } = options;
+    const { fragment, fragmentName, id, variables } = options;
 
     const nextOperationId = ++rawData.operationIdCounter;
     rawData.enableDebug &&
       console.log(
-        `APD operationid:${nextOperationId} apolloClient.writeFragment start`
+        `APD operationid:${nextOperationId} apolloClient.readFragment start`
       );
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-      const writeFragmentOp = new ClientWriteFragmentOperation({
+      const readFragOp = new ClientReadFragmentOperation({
         debuggerEnabled: rawData.enableDebug || false,
         errorPolicy: undefined,
+        fragmentName: fragmentName || "unknown_fragment_name",
         operationId: nextOperationId,
         query: fragment,
         timer: new RestrictedTimer(rawData.timer),
         variables: variables as OperationVariables,
-        fragmentName: fragmentName || "",
       });
-      writeFragmentOp.addResult(data);
-      opMap.set(nextOperationId, writeFragmentOp);
+
+      opMap.set(nextOperationId, readFragOp);
     });
 
     rawData.currentOperationId = nextOperationId;
-    const result = originalWriteFragment.apply(this, args);
+    const result = originalReadFragment.apply(this, args);
     rawData.currentOperationId = 0;
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-      const operation: ClientWriteFragmentOperation | undefined = opMap.get(
-        nextOperationId
-      ) as ClientWriteFragmentOperation | undefined;
+      const operation = opMap.get(nextOperationId);
 
       if (operation) {
+        operation.addResult(result);
         operation.duration.operationExecutionEndTime = performance.now();
       }
     });
@@ -72,6 +63,6 @@ export const overrideClientWriteFragment = (
   };
 
   return () => {
-    apolloClient.writeFragment = originalWriteFragment;
+    apolloClient.readFragment = originalReadFragment;
   };
 };

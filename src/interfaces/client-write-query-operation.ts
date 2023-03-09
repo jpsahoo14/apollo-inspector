@@ -12,27 +12,26 @@ import { getOperationNameV2 } from "../apollo-inspector-utils";
 import { print } from "graphql";
 import sizeOf from "object-sizeof";
 
-export interface IWriteFragmentOperationConstructor
+export interface IClientWriteQueryOperationConstructor
   extends Omit<IBaseOperationConstructor, "dataId"> {
-  fragmentName: string;
+  dataId?: DataId;
 }
 
-export class WriteFragmentOperation extends BaseOperation {
+export class ClientWriteQueryOperation extends BaseOperation {
   private _operationStage: OperationStage;
   private _operationStages: OperationStage[];
-  private fragmentName: string;
 
   constructor({
+    dataId,
     debuggerEnabled,
     errorPolicy,
     operationId,
     query,
     variables,
     timer,
-    fragmentName,
-  }: IWriteFragmentOperationConstructor) {
+  }: IClientWriteQueryOperationConstructor) {
     super({
-      dataId: DataId.WRITE_FRAGMENT,
+      dataId: dataId || DataId.CLIENT_WRITE_QUERY,
       debuggerEnabled,
       errorPolicy,
       operationId,
@@ -41,9 +40,8 @@ export class WriteFragmentOperation extends BaseOperation {
       timer,
     });
 
-    this._operationStage = OperationStage.writeFragment;
-    this._operationStages = [OperationStage.writeFragment];
-    this.fragmentName = fragmentName;
+    this._operationStage = OperationStage.writeQuery;
+    this._operationStages = [OperationStage.writeQuery];
   }
 
   public get operationStage() {

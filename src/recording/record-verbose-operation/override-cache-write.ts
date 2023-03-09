@@ -1,4 +1,5 @@
 import { ApolloClient, NormalizedCacheObject, Cache } from "@apollo/client";
+import { getAffectedQueries } from "../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
@@ -6,7 +7,6 @@ import {
   IVerboseOperationMap,
   QueryOperation,
   SubscriptionOperation,
-  DataId,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces";
 
@@ -36,7 +36,8 @@ export const overrideCacheWrite = (
       addCacheTimeInformationToSubscriptionOperation(
         setVerboseApolloOperations,
         args,
-        rawData
+        rawData,
+        apolloClient
       );
     }
     return result;
@@ -50,7 +51,8 @@ export const overrideCacheWrite = (
 const addCacheTimeInformationToSubscriptionOperation = (
   setVerboseApolloOperations: ISetVerboseApolloOperations,
   args: [Cache.WriteOptions<any, any>],
-  rawData: IApolloInspectorState
+  rawData: IApolloInspectorState,
+  apolloClient: ApolloClient<NormalizedCacheObject>
 ) => {
   setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
     const { query, result, variables } = args[0];
@@ -66,6 +68,8 @@ const addCacheTimeInformationToSubscriptionOperation = (
     operation.addResult(result);
     operation.setOperationStage(OperationStage.addedDataToCache);
     operation.addTimingInfo("dataWrittenToCacheCompletedAt");
+    const affectedQueries = getAffectedQueries(apolloClient);
+    operation.addAffectedQueries(affectedQueries);
     opMap.set(operationId, operation);
   });
 };

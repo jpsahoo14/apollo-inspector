@@ -8,7 +8,7 @@ import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IVerboseOperationMap,
-  WriteQueryOperation,
+  ClientWriteQueryOperation,
   BaseOperation,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces";
@@ -34,7 +34,7 @@ export const overrideClientWriteQuery = (
       );
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-      const writeQueryOp = new WriteQueryOperation({
+      const writeQueryOp = new ClientWriteQueryOperation({
         debuggerEnabled: rawData.enableDebug || false,
         errorPolicy: undefined,
         operationId: nextOperationId,
@@ -62,10 +62,10 @@ export const overrideClientWriteQuery = (
     apolloClient.writeQuery = originalWriteQuery;
   };
 };
-function updateOperationEndExecutionTime(
+const updateOperationEndExecutionTime = (
   setVerboseApolloOperations: ISetVerboseApolloOperations,
   nextOperationId: number
-) {
+) => {
   setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
     const operation: BaseOperation | undefined = opMap.get(nextOperationId) as
       | BaseOperation
@@ -75,4 +75,4 @@ function updateOperationEndExecutionTime(
       operation.duration.operationExecutionEndTime = performance.now();
     }
   });
-}
+};
