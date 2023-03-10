@@ -4,6 +4,7 @@ import {
   ErrorPolicy,
   Observable,
 } from "@apollo/client";
+import {} from "../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
@@ -11,6 +12,7 @@ import {
   IFetchQueryObservableParams,
   QueryOperation,
   IVerboseOperationMap,
+  getBaseOperationConstructorExtraParams,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces/restricted-timer";
 
@@ -48,7 +50,7 @@ export const overrideFetchQueryObservable = (
           fetchPolicy,
           debuggerEnabled: rawData.enableDebug || false,
           errorPolicy,
-          timer: new RestrictedTimer(rawData.timer),
+          ...getBaseOperationConstructorExtraParams({ rawData }),
         });
         opMap.set(nextOperationId, queryOp);
         if (
@@ -70,7 +72,11 @@ export const overrideFetchQueryObservable = (
       rawData.currentOperationId = 0;
 
       const subscription = observable.subscribe({
-        next: (result: unknown) => {
+        next: (result: {
+          data: unknown;
+          errors?: unknown;
+          error?: unknown;
+        }) => {
           rawData.enableDebug &&
             console.log(
               `APD operationId:${nextOperationId} fetchQueryObservable next`,
@@ -79,7 +85,8 @@ export const overrideFetchQueryObservable = (
 
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             const op = opMap.get(nextOperationId) as QueryOperation | undefined;
-            op?.addResult(result);
+            op?.addResult(result.data);
+            op?.addError(result.errors || result.error);
           });
         },
         error: (error: unknown) => {

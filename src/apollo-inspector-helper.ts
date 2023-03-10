@@ -17,7 +17,9 @@ import {
 } from "./recording";
 import { Timer } from "timer-node";
 
-export const initializeRawData = (): IDataSetters => {
+export const initializeRawData = (
+  config: IInspectorTrackingConfig
+): IDataSetters => {
   const rawData: IApolloInspectorState = {
     operations: [],
     verboseOperationsMap: new Map(),
@@ -29,6 +31,7 @@ export const initializeRawData = (): IDataSetters => {
     operationIdCounter: 0,
     enableDebug: false,
     timer: new Timer().start(),
+    config,
   };
   (window as any).rawData = rawData;
   const getRawData = () => rawData;

@@ -6,11 +6,11 @@ import {
   InternalOperationStatus,
   OperationStatus,
   DataId,
-} from "./apollo-inspector.interface";
-import { IDiff } from "./apollo-client.interface";
+} from "../apollo-inspector.interface";
+import { IDiff } from "../apollo-client.interface";
 import { print } from "graphql";
 import { WatchQueryFetchPolicy } from "@apollo/client";
-import { getOperationNameV2 } from "../apollo-inspector-utils";
+import { getOperationNameV2 } from "../../apollo-inspector-utils";
 import { cloneDeep } from "lodash-es";
 import sizeOf from "object-sizeof";
 
@@ -39,6 +39,7 @@ export class QueryOperation extends BaseOperation {
     queryInfo,
     variables,
     timer,
+    cacheSnapshotConfig,
   }: IQueryOperationConstructor) {
     super({
       dataId: DataId.ROOT_QUERY,
@@ -48,6 +49,7 @@ export class QueryOperation extends BaseOperation {
       query,
       variables,
       timer,
+      cacheSnapshotConfig,
     });
 
     this.queryInfo = queryInfo;
@@ -217,6 +219,7 @@ export class QueryOperation extends BaseOperation {
       },
       timing: this.timing,
       status: this.getOperationStatus(),
+      cacheSnapshot: this.cacheSnapshot,
     };
   }
 

@@ -1,6 +1,9 @@
-import { IApolloOperation } from "./apollo-inspector.interface";
-import { BaseOperation } from "./base-operation";
-import { QueryOperation } from "./query-operation";
+import {
+  IApolloOperation,
+  IInspectorTrackingConfig,
+} from "./apollo-inspector.interface";
+import { BaseOperation } from "./operation-model/base-operation";
+import { QueryOperation } from "./operation-model";
 import { Timer } from "timer-node";
 
 export type IVerboseOperationMap = Map<number, BaseOperation | QueryOperation>;
@@ -16,8 +19,11 @@ export interface IApolloInspectorState {
   operationIdCounter: number;
   enableDebug?: boolean;
   timer: Timer;
+  config: IInspectorTrackingConfig;
 }
 
 export type ISetVerboseApolloOperations = (
   updateData: IVerboseOperationMap | ((state: IVerboseOperationMap) => void)
 ) => void;
+
+export const NameNotFound = "Name_Not_Found";

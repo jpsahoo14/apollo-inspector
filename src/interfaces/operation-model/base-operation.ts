@@ -7,12 +7,15 @@ import {
   ITiming,
   OperationStatus,
   InternalOperationStatus,
-} from "./apollo-inspector.interface";
+  ICacheSnapshotAfterOperationConfig,
+} from "../apollo-inspector.interface";
 import { DocumentNode, print } from "graphql";
 import { ErrorPolicy, OperationVariables } from "@apollo/client";
-import { getOperationNameV2 } from "../apollo-inspector-utils";
-import { RestrictedTimer } from "./restricted-timer";
-import { IBaseOperation } from "./base-operation.interface";
+import { getOperationNameV2 } from "../../apollo-inspector-utils";
+import { RestrictedTimer } from "../restricted-timer";
+import { IBaseOperation } from "../base-operation.interface";
+import { cloneDeep } from "lodash-es";
+import { isOperationNameInList } from "./operations-util";
 
 export interface IBaseOperationConstructor {
   dataId: DataId;
@@ -22,6 +25,7 @@ export interface IBaseOperationConstructor {
   debuggerEnabled: boolean;
   errorPolicy: ErrorPolicy | undefined;
   timer: RestrictedTimer;
+  cacheSnapshotConfig?: ICacheSnapshotAfterOperationConfig;
 }
 
 export class BaseOperation implements IBaseOperation {
@@ -39,6 +43,9 @@ export class BaseOperation implements IBaseOperation {
   protected timer: RestrictedTimer;
   protected status: InternalOperationStatus[];
   protected timing: ITiming;
+  protected cacheSnapshot: any;
+  protected cacheSnapShotConfig: ICacheSnapshotAfterOperationConfig | null;
+  protected operationName: string;
   public duration: IDebugOperationDuration;
   public serverQuery: DocumentNode | undefined;
   public clientQuery: DocumentNode | undefined;
@@ -51,6 +58,7 @@ export class BaseOperation implements IBaseOperation {
     debuggerEnabled,
     errorPolicy,
     timer,
+    cacheSnapshotConfig,
   }: IBaseOperationConstructor) {
     if (operationId === 0) {
       debugger;
@@ -66,11 +74,12 @@ export class BaseOperation implements IBaseOperation {
     this._variables = variables;
     this._id = operationId;
     this._affectedQueries = [];
-
+    this.operationName = getOperationNameV2(query);
     this.serverQuery = undefined;
     this.clientQuery = undefined;
 
     this.debuggerEnabled = debuggerEnabled;
+    this.cacheSnapShotConfig = cacheSnapshotConfig || null;
     this.errorPolicy = errorPolicy;
     const val = false;
     if (val) {
@@ -88,7 +97,8 @@ export class BaseOperation implements IBaseOperation {
     this.status = [];
     this.status.push(InternalOperationStatus.InFlight);
   }
-  addResult(result: unknown): void {
+
+  public addResult(result: unknown): void {
     throw new Error("Method not implemented.");
   }
 
@@ -117,7 +127,7 @@ export class BaseOperation implements IBaseOperation {
     if (this.error) {
       debugger;
     }
-    this.error = error;
+    this.error = error || null;
     this.addStatus(InternalOperationStatus.FailedToGetResultFromNetwork);
   }
 
@@ -184,6 +194,7 @@ export class BaseOperation implements IBaseOperation {
       duration: undefined,
       timing: undefined,
       status: this.getOperationStatus(),
+      cacheSnapshot: this.cacheSnapshot,
     };
   }
 
@@ -233,6 +244,25 @@ export class BaseOperation implements IBaseOperation {
 
   public addStatus(status: InternalOperationStatus) {
     this.status.push(status);
+  }
+
+  public setCacheSnapshot(cache: unknown) {
+    if (
+      this.cacheSnapShotConfig?.enabled &&
+      isOperationNameInList(
+        this.getOperationName(),
+        this.cacheSnapShotConfig.operationsName
+      )
+    ) {
+      const startTime = performance.now();
+      this.cacheSnapshot = cloneDeep(cache);
+      const endTime = performance.now();
+      console.log({ cloneDeepTime: `${endTime - startTime}` });
+    }
+  }
+
+  public getOperationName(): string {
+    return this.operationName;
   }
 
   protected getOperationStatus() {

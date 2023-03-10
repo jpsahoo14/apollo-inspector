@@ -1,13 +1,13 @@
-import { DataId } from "./apollo-inspector.interface";
+import { DataId } from "../apollo-inspector.interface";
 import {
   ClientWriteQueryOperation,
   IClientWriteQueryOperationConstructor,
 } from "./client-write-query-operation";
 
-interface IClientReadQueryOperation
+interface ICacheWriteQueryOperationConstructor
   extends IClientWriteQueryOperationConstructor {}
 
-export class ClientReadQueryOperation extends ClientWriteQueryOperation {
+export class CacheWriteQueryOperation extends ClientWriteQueryOperation {
   constructor({
     debuggerEnabled,
     errorPolicy,
@@ -15,15 +15,17 @@ export class ClientReadQueryOperation extends ClientWriteQueryOperation {
     query,
     variables,
     timer,
-  }: IClientReadQueryOperation) {
+    cacheSnapshotConfig,
+  }: ICacheWriteQueryOperationConstructor) {
     super({
-      dataId: DataId.CLIENT_READ_QUERY,
+      dataId: DataId.CACHE_WRITE_QUERY,
       debuggerEnabled,
       errorPolicy,
       operationId,
       query,
       variables,
       timer,
+      cacheSnapshotConfig,
     });
   }
 }

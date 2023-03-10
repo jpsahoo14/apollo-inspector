@@ -170,6 +170,7 @@ export interface IVerboseOperation {
   fetchPolicy: WatchQueryFetchPolicy | undefined;
   timing: ITiming | undefined; // Time information relative to start recording at 0 seconds
   status: OperationStatus;
+  cacheSnapshot: unknown;
 }
 
 export enum OperationStatus {
@@ -234,10 +235,19 @@ export interface IAffectedQuery {
 export interface IInspectorTrackingConfig {
   tracking: {
     trackCacheOperation?: boolean;
-    trackVerboseOperations?: boolean;
+    trackVerboseOperations?: boolean | ITrackVerboseOperationsConfig;
     trackAllOperations?: boolean;
   };
   hooks?: IHook[];
+}
+
+export interface ITrackVerboseOperationsConfig {
+  cacheSnapshotAfterOperation?: ICacheSnapshotAfterOperationConfig;
+}
+
+export interface ICacheSnapshotAfterOperationConfig {
+  operationsName: string[];
+  enabled: boolean;
 }
 
 export declare class IHook {

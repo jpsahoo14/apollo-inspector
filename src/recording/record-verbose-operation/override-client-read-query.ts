@@ -4,11 +4,13 @@ import {
   OperationVariables,
   DataProxy,
 } from "@apollo/client";
+import {} from "../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IVerboseOperationMap,
   ClientReadQueryOperation,
+  getBaseOperationConstructorExtraParams,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces";
 
@@ -38,8 +40,8 @@ export const overrideClientReadQuery = (
         errorPolicy: undefined,
         operationId: nextOperationId,
         query,
-        timer: new RestrictedTimer(rawData.timer),
         variables: variables as OperationVariables,
+        ...getBaseOperationConstructorExtraParams({ rawData }),
       });
       opMap.set(nextOperationId, readQueryOp);
     });

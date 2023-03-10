@@ -9,8 +9,8 @@ import {
   IApolloInspectorState,
   IVerboseOperationMap,
   CacheReadFragmentOperation,
+  getBaseOperationConstructorExtraParams,
 } from "../../interfaces";
-import { RestrictedTimer } from "../../interfaces";
 
 export const overrideCacheReadFragment = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
@@ -42,9 +42,9 @@ export const overrideCacheReadFragment = (
         errorPolicy: undefined,
         operationId: nextOperationId,
         query: fragment,
-        timer: new RestrictedTimer(rawData.timer),
         variables: variables as OperationVariables,
         fragmentName: fragmentName || "unknown_fragment_name",
+        ...getBaseOperationConstructorExtraParams({ rawData }),
       });
 
       // set current operationId to new operationId

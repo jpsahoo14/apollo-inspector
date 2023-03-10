@@ -1,15 +1,15 @@
 import { WatchQueryFetchPolicy } from "@apollo/client";
 import { BaseOperation, IBaseOperationConstructor } from "./base-operation";
-import { IDiff } from "./apollo-client.interface";
+import { IDiff } from "../apollo-client.interface";
 import {
   OperationStage,
   ResultsFrom,
   IVerboseOperation,
   OperationStatus,
   DataId,
-} from "./apollo-inspector.interface";
+} from "../apollo-inspector.interface";
 import { cloneDeep } from "lodash-es";
-import { getOperationNameV2 } from "../apollo-inspector-utils";
+import { getOperationNameV2 } from "../../apollo-inspector-utils";
 import { print } from "graphql";
 import sizeOf from "object-sizeof";
 
@@ -32,6 +32,7 @@ export class SubscriptionOperation extends BaseOperation {
     query,
     variables,
     timer,
+    cacheSnapshotConfig,
   }: ISubscriptionOperationConstructor) {
     super({
       dataId: DataId.ROOT_SUBSCRIPTION,
@@ -41,6 +42,7 @@ export class SubscriptionOperation extends BaseOperation {
       query,
       variables,
       timer,
+      cacheSnapshotConfig,
     });
 
     this._operationStage = OperationStage.startGraphQLSubscription;
@@ -91,6 +93,7 @@ export class SubscriptionOperation extends BaseOperation {
       },
       timing: this.timing,
       status: OperationStatus.Succeded,
+      cacheSnapshot: this.cacheSnapshot,
     };
   }
 }

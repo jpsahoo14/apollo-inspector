@@ -1,16 +1,4 @@
-import { BaseOperation, IBaseOperationConstructor } from "./base-operation";
-import {
-  OperationStage,
-  ResultsFrom,
-  IVerboseOperation,
-  InternalOperationStatus,
-  OperationStatus,
-  DataId,
-} from "./apollo-inspector.interface";
-import { cloneDeep } from "lodash-es";
-import { getOperationNameV2 } from "../apollo-inspector-utils";
-import { print } from "graphql";
-import sizeOf from "object-sizeof";
+import { DataId } from "../apollo-inspector.interface";
 import {
   ClientWriteFragmentOperation,
   ICientWriteFragmentOperationConstructor,
@@ -29,6 +17,7 @@ export class ClientReadFragmentOperation extends ClientWriteFragmentOperation {
     variables,
     timer,
     fragmentName,
+    cacheSnapshotConfig,
   }: ICientWriteFragmentOperationConstructor) {
     super({
       dataId: DataId.CLIENT_READ_FRAGMENT,
@@ -39,6 +28,7 @@ export class ClientReadFragmentOperation extends ClientWriteFragmentOperation {
       variables,
       timer,
       fragmentName,
+      cacheSnapshotConfig,
     });
   }
 }

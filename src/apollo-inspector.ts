@@ -23,7 +23,7 @@ export class ApolloInspector {
     }
 
     this.setRecording(true);
-    const dataSetters: IDataSetters = initializeRawData();
+    const dataSetters: IDataSetters = initializeRawData(config);
 
     const cleanUps = startRecordingInternal({
       client: this.client,

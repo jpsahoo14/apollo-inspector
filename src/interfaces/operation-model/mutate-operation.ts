@@ -1,47 +1,86 @@
 import { BaseOperation, IBaseOperationConstructor } from "./base-operation";
 import {
+  FetchPolicy,
+  OperationVariables,
+  MutationQueryReducersMap,
+  InternalRefetchQueriesInclude,
+  FetchResult,
+  OnQueryUpdated,
+  ErrorPolicy,
+} from "@apollo/client";
+import {
   OperationStage,
   ResultsFrom,
   IVerboseOperation,
   InternalOperationStatus,
   OperationStatus,
   DataId,
-} from "./apollo-inspector.interface";
+} from "../apollo-inspector.interface";
 import { cloneDeep } from "lodash-es";
-import { getOperationNameV2 } from "../apollo-inspector-utils";
+import { getOperationNameV2 } from "../../apollo-inspector-utils";
 import { print } from "graphql";
+import { MutationFetchPolicy } from "../apollo-client.interface";
 import sizeOf from "object-sizeof";
 
-export interface IClientWriteQueryOperationConstructor
+export interface IMutationOperationConstructor
   extends Omit<IBaseOperationConstructor, "dataId"> {
-  dataId?: DataId;
+  fetchPolicy: MutationFetchPolicy;
+  optimisticResponse: unknown | ((vars: OperationVariables) => unknown);
+  updateQueries?: MutationQueryReducersMap<unknown>;
+  refetchQueries?:
+    | ((result: FetchResult<unknown>) => InternalRefetchQueriesInclude)
+    | InternalRefetchQueriesInclude;
+  awaitRefetchQueries?: boolean;
+  onQueryUpdated?: OnQueryUpdated<any>;
 }
 
-export class ClientWriteQueryOperation extends BaseOperation {
+export class MutationOperation extends BaseOperation {
   private _operationStage: OperationStage;
   private _operationStages: OperationStage[];
+  private optimisticResponse: unknown | ((vars: OperationVariables) => unknown);
+  private updateQueries?: MutationQueryReducersMap<unknown>;
+  private refetchQueries?:
+    | ((result: FetchResult<unknown>) => InternalRefetchQueriesInclude)
+    | InternalRefetchQueriesInclude;
+  private awaitRefetchQueries?: boolean;
+  private onQueryUpdated?: OnQueryUpdated<any>;
+
+  public fetchPolicy: MutationFetchPolicy;
 
   constructor({
-    dataId,
     debuggerEnabled,
     errorPolicy,
+    fetchPolicy,
     operationId,
     query,
     variables,
     timer,
-  }: IClientWriteQueryOperationConstructor) {
+    optimisticResponse,
+    awaitRefetchQueries,
+    onQueryUpdated,
+    refetchQueries,
+    updateQueries,
+    cacheSnapshotConfig,
+  }: IMutationOperationConstructor) {
     super({
-      dataId: dataId || DataId.CLIENT_WRITE_QUERY,
+      dataId: DataId.ROOT_MUTATION,
       debuggerEnabled,
       errorPolicy,
       operationId,
       query,
       variables,
       timer,
+      cacheSnapshotConfig,
     });
 
-    this._operationStage = OperationStage.writeQuery;
-    this._operationStages = [OperationStage.writeQuery];
+    this.fetchPolicy = fetchPolicy;
+    this._operationStage = OperationStage.mutate;
+    this._operationStages = [OperationStage.mutate];
+    this.optimisticResponse = optimisticResponse;
+    this.awaitRefetchQueries = awaitRefetchQueries;
+    this.onQueryUpdated = onQueryUpdated;
+    this.refetchQueries = refetchQueries;
+    this.updateQueries = updateQueries;
   }
 
   public get operationStage() {
@@ -55,7 +94,7 @@ export class ClientWriteQueryOperation extends BaseOperation {
       result: clonedResult,
       size: sizeOf(clonedResult),
     });
-    this.addStatus(InternalOperationStatus.ResultFromCacheSucceded);
+    this.addStatus(InternalOperationStatus.ResultFromNetworkSucceded);
   }
 
   public getOperationInfo(): IVerboseOperation {
@@ -72,7 +111,7 @@ export class ClientWriteQueryOperation extends BaseOperation {
       affectedQueries: this._affectedQueries,
       isActive: this.active,
       error: this.error,
-      fetchPolicy: undefined,
+      fetchPolicy: this.fetchPolicy,
       warning: undefined,
       duration: {
         totalTime: this.getTotalExecutionTime(),
@@ -83,6 +122,7 @@ export class ClientWriteQueryOperation extends BaseOperation {
       },
       timing: this.timing,
       status: this.getOperationStatus(),
+      cacheSnapshot: this.cacheSnapshot,
     };
   }
 
@@ -95,7 +135,9 @@ export class ClientWriteQueryOperation extends BaseOperation {
   }
 
   protected getOperationStatus() {
-    if (this.status.includes(InternalOperationStatus.ResultFromCacheSucceded)) {
+    if (
+      this.status.includes(InternalOperationStatus.ResultFromNetworkSucceded)
+    ) {
       return OperationStatus.Succeded;
     }
 

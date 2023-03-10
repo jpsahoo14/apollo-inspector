@@ -1,4 +1,4 @@
-import { DataId } from "./apollo-inspector.interface";
+import { DataId } from "../apollo-inspector.interface";
 import {
   ClientWriteFragmentOperation,
   ICientWriteFragmentOperationConstructor,
@@ -16,6 +16,7 @@ export class CacheWriteFragmentOperation extends ClientWriteFragmentOperation {
     variables,
     timer,
     fragmentName,
+    cacheSnapshotConfig,
   }: ICacheWriteFragmentOperation) {
     super({
       dataId: DataId.CACHE_WRITE_FRAGMENT,
@@ -26,6 +27,7 @@ export class CacheWriteFragmentOperation extends ClientWriteFragmentOperation {
       variables,
       timer,
       fragmentName,
+      cacheSnapshotConfig,
     });
   }
 }

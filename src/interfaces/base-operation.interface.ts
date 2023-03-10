@@ -16,4 +16,6 @@ export interface IBaseOperation {
   getCacheWriteTime(): number;
   addResult(result: unknown): void;
   addTimingInfo(key: keyof ITiming): void;
+  setCacheSnapshot(cache: unknown): void;
+  getOperationName(): string;
 }

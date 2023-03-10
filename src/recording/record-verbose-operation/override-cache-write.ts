@@ -1,5 +1,8 @@
 import { ApolloClient, NormalizedCacheObject, Cache } from "@apollo/client";
-import { getAffectedQueries } from "../../apollo-inspector-utils";
+import {
+  getAffectedQueries,
+  setCacheInOperation,
+} from "../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
@@ -7,6 +10,7 @@ import {
   IVerboseOperationMap,
   QueryOperation,
   SubscriptionOperation,
+  getBaseOperationConstructorExtraParams,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces";
 
@@ -30,7 +34,9 @@ export const overrideCacheWrite = (
         setVerboseApolloOperations,
         operationId,
         cacheWriteStart,
-        cacheWriteEnd
+        cacheWriteEnd,
+        apolloClient,
+        rawData
       );
     } else if (args[0].dataId === "ROOT_SUBSCRIPTION") {
       addCacheTimeInformationToSubscriptionOperation(
@@ -63,11 +69,12 @@ const addCacheTimeInformationToSubscriptionOperation = (
       operationId,
       debuggerEnabled: rawData.enableDebug || false,
       errorPolicy: "none",
-      timer: new RestrictedTimer(rawData.timer),
+      ...getBaseOperationConstructorExtraParams({ rawData }),
     });
     operation.addResult(result);
     operation.setOperationStage(OperationStage.addedDataToCache);
     operation.addTimingInfo("dataWrittenToCacheCompletedAt");
+    setCacheInOperation(operation, apolloClient);
     const affectedQueries = getAffectedQueries(apolloClient);
     operation.addAffectedQueries(affectedQueries);
     opMap.set(operationId, operation);
@@ -78,7 +85,9 @@ const addCacheTimeInformationToOperation = (
   setVerboseApolloOperations: ISetVerboseApolloOperations,
   operationId: number,
   cacheWriteStart: number,
-  cacheWriteEnd: number
+  cacheWriteEnd: number,
+  apolloClient: ApolloClient<NormalizedCacheObject>,
+  rawData: IApolloInspectorState
 ) => {
   setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
     const operation: QueryOperation | undefined = opMap.get(operationId) as
@@ -92,6 +101,10 @@ const addCacheTimeInformationToOperation = (
       operation.duration.cacheWriteStart = cacheWriteStart;
       operation.duration.cacheWriteEnd = cacheWriteEnd;
       operation.addTimingInfo("dataWrittenToCacheCompletedAt");
+    }
+
+    if (operation) {
+      setCacheInOperation(operation, apolloClient);
     }
     operation?.setOperationStage(OperationStage.addedDataToCache);
   });

@@ -11,6 +11,7 @@ import {
   IVerboseOperationMap,
   RestrictedTimer,
   CacheReadQueryOperation,
+  getBaseOperationConstructorExtraParams,
 } from "../../interfaces";
 
 export const overrideCacheReadQuery = (
@@ -34,8 +35,8 @@ export const overrideCacheReadQuery = (
         errorPolicy: undefined,
         operationId: nextOperationId,
         query,
-        timer: new RestrictedTimer(rawData.timer),
         variables: variables as OperationVariables,
+        ...getBaseOperationConstructorExtraParams({ rawData }),
       });
 
       rawData.currentOperationId = nextOperationId;

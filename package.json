@@ -1,6 +1,6 @@
 {
   "name": "apollo-inspector",
-  "version": "1.14.0",
+  "version": "1.15.0",
   "description": "Tool to track apollo client operations",
   "main": "dist/main.js",
   "source": "index.ts",
@@ -37,6 +37,7 @@
   "dependencies": {
     "@swc/helpers": "^0.4.14",
     "@types/node": "^18.11.17",
+    "deep-object-diff": "^1.1.9",
     "graphql": "^15.0.0",
     "lodash-es": "4.17.6",
     "object-sizeof": "^2.6.1",

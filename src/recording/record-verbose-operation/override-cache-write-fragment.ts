@@ -8,9 +8,10 @@ import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IVerboseOperationMap,
+  getBaseOperationConstructorExtraParams,
 } from "../../interfaces";
 import { getAffectedQueries } from "../../apollo-inspector-utils";
-import { CacheWriteFragmentOperation } from "../../interfaces/cache-write-fragment-operation";
+import { CacheWriteFragmentOperation } from "../../interfaces/";
 import { RestrictedTimer } from "../../interfaces";
 import { DocumentNode } from "graphql";
 
@@ -92,7 +93,7 @@ const getOperation = <TData, TVariables>(
     errorPolicy: undefined,
     operationId: nextOperationId,
     query: fragment,
-    timer: new RestrictedTimer(rawData.timer),
     variables: variables as OperationVariables,
     fragmentName: fragmentName || "unknown_fragment_name",
+    ...getBaseOperationConstructorExtraParams({ rawData }),
   });

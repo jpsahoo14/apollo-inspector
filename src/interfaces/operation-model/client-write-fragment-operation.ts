@@ -6,11 +6,12 @@ import {
   InternalOperationStatus,
   OperationStatus,
   DataId,
-} from "./apollo-inspector.interface";
+} from "../apollo-inspector.interface";
 import { cloneDeep } from "lodash-es";
-import { getOperationNameV2 } from "../apollo-inspector-utils";
+import { getOperationNameV2 } from "../../apollo-inspector-utils";
 import { print } from "graphql";
 import sizeOf from "object-sizeof";
+import { NameNotFound } from "../apollo-inspector-debug-interfaces";
 
 export interface ICientWriteFragmentOperationConstructor
   extends Omit<IBaseOperationConstructor, "dataId"> {
@@ -32,6 +33,7 @@ export class ClientWriteFragmentOperation extends BaseOperation {
     variables,
     timer,
     fragmentName,
+    cacheSnapshotConfig,
   }: ICientWriteFragmentOperationConstructor) {
     super({
       dataId: dataId || DataId.CLIENT_WRITE_FRAGMENT,
@@ -41,6 +43,7 @@ export class ClientWriteFragmentOperation extends BaseOperation {
       query,
       variables,
       timer,
+      cacheSnapshotConfig,
     });
 
     this._operationStage = OperationStage.writeFragment;
@@ -63,7 +66,8 @@ export class ClientWriteFragmentOperation extends BaseOperation {
   }
 
   public getOperationInfo(): IVerboseOperation {
-    const operationName = getOperationNameV2(this._query);
+    const operationName = this.getOperationName();
+
     const operationString = print(this._query);
 
     return {
@@ -87,6 +91,7 @@ export class ClientWriteFragmentOperation extends BaseOperation {
       },
       timing: this.timing,
       status: this.getOperationStatus(),
+      cacheSnapshot: this.cacheSnapshot,
     };
   }
 
@@ -96,6 +101,12 @@ export class ClientWriteFragmentOperation extends BaseOperation {
     if (opStage == OperationStage.addedDataToCache) {
       this.timing.dataWrittenToCacheCompletedAt = this.timer.getCurrentMs();
     }
+  }
+
+  public getOperationName(): string {
+    return this.operationName === NameNotFound
+      ? this.fragmentName
+      : this.operationName;
   }
 
   protected getOperationStatus() {
