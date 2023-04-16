@@ -227,9 +227,24 @@ export interface IAffectedQueryMap {
   [key: string]: IAffectedQuery;
 }
 
+export interface IAffectedQueryInternalMap {
+  [key: string]: IAffectedQueryInternal;
+}
+
 export interface IAffectedQuery {
   affectedQueryName: string;
-  dueToOperations: string[];
+  dueToOperations: IDueToOperation[];
+}
+
+export interface IAffectedQueryInternal {
+  affectedQueryName: string;
+  dueToOperationsMap: { [key: number]: IDueToOperation };
+}
+
+export interface IDueToOperation {
+  id: number; // operationId
+  operationType: OperationType; // Type of operation, whether its qquery, mutation, subscription
+  operationName: string | undefined; // Name of operation
 }
 
 export interface IInspectorTrackingConfig {

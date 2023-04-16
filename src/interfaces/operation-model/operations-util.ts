@@ -24,7 +24,7 @@ export const isOperationNameInList = (
   operationName: string,
   names: string[]
 ) => {
-  const found = names.filter(
+  const found = names.find(
     (name) =>
       name.toLocaleLowerCase().trim() ===
       operationName.toLocaleLowerCase().trim()

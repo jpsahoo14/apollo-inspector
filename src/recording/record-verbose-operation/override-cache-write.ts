@@ -12,7 +12,6 @@ import {
   SubscriptionOperation,
   getBaseOperationConstructorExtraParams,
 } from "../../interfaces";
-import { RestrictedTimer } from "../../interfaces";
 
 export const overrideCacheWrite = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
