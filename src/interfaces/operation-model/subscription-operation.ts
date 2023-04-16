@@ -1,21 +1,24 @@
 import { WatchQueryFetchPolicy } from "@apollo/client";
-import { IDebugOperation, IDebugOperationConstructor } from "./debug-operation";
-import { IDiff } from "./apollo-client.interface";
+import { BaseOperation, IBaseOperationConstructor } from "./base-operation";
+import { IDiff } from "../apollo-client.interface";
 import {
   OperationStage,
   ResultsFrom,
   IVerboseOperation,
-} from "./apollo-inspector.interface";
+  OperationStatus,
+  DataId,
+} from "../apollo-inspector.interface";
 import { cloneDeep } from "lodash-es";
-import { getOperationNameV2 } from "../apollo-inspector-utils";
+import { getOperationNameV2 } from "../../apollo-inspector-utils";
 import { print } from "graphql";
+import sizeOf from "object-sizeof";
 
 export interface ISubscriptionOperationConstructor
-  extends IDebugOperationConstructor {}
+  extends Omit<IBaseOperationConstructor, "dataId"> {}
 
-export class SubscriptionOperation extends IDebugOperation {
-  private _operationStage: OperationStage;
+export class SubscriptionOperation extends BaseOperation {
   private _operationStages: OperationStage[];
+  private _operationStage: OperationStage;
 
   public deduplication: boolean;
   public diff: IDiff | undefined;
@@ -23,22 +26,23 @@ export class SubscriptionOperation extends IDebugOperation {
   public fetchPolicy: WatchQueryFetchPolicy | "no-cache" | undefined;
 
   constructor({
-    dataId,
     debuggerEnabled,
     errorPolicy,
     operationId,
     query,
     variables,
     timer,
+    cacheSnapshotConfig,
   }: ISubscriptionOperationConstructor) {
     super({
-      dataId,
+      dataId: DataId.ROOT_SUBSCRIPTION,
       debuggerEnabled,
       errorPolicy,
       operationId,
       query,
       variables,
       timer,
+      cacheSnapshotConfig,
     });
 
     this._operationStage = OperationStage.startGraphQLSubscription;
@@ -57,7 +61,11 @@ export class SubscriptionOperation extends IDebugOperation {
 
   public addResult(result: unknown) {
     const clonedResult = cloneDeep(result);
-    this._result.push({ from: ResultsFrom.NETWORK, result: clonedResult });
+    this._result.push({
+      from: ResultsFrom.NETWORK,
+      result: clonedResult,
+      size: sizeOf(clonedResult),
+    });
   }
 
   public getOperationInfo(): IVerboseOperation {
@@ -77,13 +85,15 @@ export class SubscriptionOperation extends IDebugOperation {
       fetchPolicy: this.fetchPolicy,
       warning: undefined,
       duration: {
-        totalTime: "NA",
+        totalTime: NaN,
         cacheWriteTime: this.getCacheWriteTime(),
-        requestExecutionTime: "NA",
-        cacheDiffTime: "NA",
-        cacheBroadcastWatchesTime: "NA",
+        requestExecutionTime: NaN,
+        cacheDiffTime: NaN,
+        cacheBroadcastWatchesTime: NaN,
       },
       timing: this.timing,
+      status: OperationStatus.Succeded,
+      cacheSnapshot: this.cacheSnapshot,
     };
   }
 }

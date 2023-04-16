@@ -49,12 +49,16 @@ node_modules/
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 
-# distribution folder
-dist/*
-
 # parcel caching
 .parcel-cache/
 .DS_Store
 
-# npm pack output
+# source code
+src/
+index.ts
+.vscode/
+scripts/
+tsconfig.json
+
+# npm pack
 package/*

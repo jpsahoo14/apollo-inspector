@@ -10,7 +10,7 @@ import {
 
 export const overrideCacheDiff = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
-  rawDataRef: IApolloInspectorState,
+  rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
   const cache = apolloClient.cache;
@@ -20,8 +20,8 @@ export const overrideCacheDiff = (
     const cacheDiffStartTime = performance.now();
     const result = originalCacheDiff.apply(this, args);
     const cacheDiffEndTime = performance.now();
-    const operationId = rawDataRef.currentOperationId;
-    rawDataRef.enableDebug &&
+    const operationId = rawData.currentOperationId;
+    rawData.enableDebug &&
       console.log(`APD operationId:${operationId} overrideCacheDiff`);
 
     if (operationId !== 0) {

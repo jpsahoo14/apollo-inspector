@@ -55,6 +55,10 @@ export type MutationFetchPolicy = Extract<
   "network-only" | "no-cache"
 >;
 
+export interface ICache {
+  data: { data: unknown };
+}
+
 export type IMarkMutationResultArgs = [IMutationResult, InMemoryCache];
 
 export type IMutationResult = {

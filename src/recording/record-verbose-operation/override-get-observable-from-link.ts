@@ -37,7 +37,7 @@ export interface IExtensions {
 
 export const overrideGetObservableFromLink = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
-  rawDataRef: IApolloInspectorState,
+  rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
   const map: { [key: string]: boolean } = {};
@@ -57,8 +57,8 @@ export const overrideGetObservableFromLink = (
       (deduplicationValue || context?.queryDeduplication) ??
       this.queryDeduplication;
 
-    const operationId = rawDataRef.currentOperationId;
-    debug(rawDataRef, operationId, map);
+    const operationId = rawData.currentOperationId;
+    debug(rawData, operationId, map);
 
     const {
       serverQuery,
@@ -68,7 +68,7 @@ export const overrideGetObservableFromLink = (
       clientQuery: DocumentNode | undefined;
     } = this.transform(query);
 
-    rawDataRef.enableDebug &&
+    rawData.enableDebug &&
       console.log(
         `APD operationId:${operationId} getObservableFromLink serverQuery:${!!serverQuery} clientQuery:${!!clientQuery}`
       );
@@ -94,14 +94,14 @@ export const overrideGetObservableFromLink = (
     );
 
     const obs = new Observable((observer: Observer<unknown>) => {
-      rawDataRef.enableDebug &&
+      rawData.enableDebug &&
         console.log(
           `APD operationId:${operationId} getObservableFromLinkSubscription start`
         );
 
       const handlers = {
         next: (result: IResult) => {
-          rawDataRef.enableDebug &&
+          rawData.enableDebug &&
             console.log(
               `APD operationId:${operationId} getObservableFromLinkSubscription next`
             );
@@ -110,7 +110,7 @@ export const overrideGetObservableFromLink = (
           observer.next?.(result);
         },
         error: (error: IError) => {
-          rawDataRef.enableDebug &&
+          rawData.enableDebug &&
             console.log(
               `APD operationId:${operationId} getObservableFromLinkSubscription error`
             );
@@ -119,7 +119,7 @@ export const overrideGetObservableFromLink = (
           observer.error?.(error);
         },
         complete: () => {
-          rawDataRef.enableDebug &&
+          rawData.enableDebug &&
             console.log(
               `APD operationId:${operationId} getObservableFromLinkSubscription complete`
             );

@@ -35,6 +35,8 @@ export enum OperationStage {
   linkCompleteExecution = "linkCompleteExecution",
   mutate = "mutate",
   startGraphQLSubscription = "startGraphQLSubscription",
+  writeQuery = "writeQuery",
+  writeFragment = "writeFragment",
 }
 
 export enum ResultsFrom {
@@ -65,9 +67,9 @@ export interface IDebugOperationDuration {
 }
 
 export interface ITiming {
-  queuedAt: number | string;
-  responseReceivedFromServerAt: number | string;
-  dataWrittenToCacheCompletedAt: number | string;
+  queuedAt: number;
+  responseReceivedFromServerAt: number;
+  dataWrittenToCacheCompletedAt: number;
 }
 
 export interface IIPCTime {
@@ -108,6 +110,14 @@ export enum OperationType {
   Mutation = "Mutation",
   Subscription = "Subscription",
   Fragment = "Fragment",
+  ClientWriteQuery = "ClientWriteQuery",
+  ClientWriteFragment = "ClientWriteFragment",
+  CacheWriteQuery = "CacheWriteQuery",
+  CacheWriteFragment = "CacheWriteFragment",
+  ClientReadQuery = "ClientReadQuery",
+  ClientReadFragment = "ClientReadFragment",
+  CacheReadQuery = "CacheReadQuery",
+  CacheReadFragment = "CacheReadFragment",
   Unknown = "Unknown",
 }
 
@@ -116,6 +126,14 @@ export enum DataId {
   ROOT_MUTATION = "ROOT_MUTATION",
   ROOT_OPTIMISTIC_MUTATION = "ROOT_OPTIMISTIC_MUTATION",
   ROOT_SUBSCRIPTION = "ROOT_SUBSCRIPTION",
+  CLIENT_WRITE_QUERY = "CLIENT_WRITE_QUERY",
+  CLIENT_WRITE_FRAGMENT = "CLIENT_WRITE_FRAGMENT",
+  CACHE_WRITE_QUERY = "CACHE_WRITE_QUERY",
+  CACHE_WRITE_FRAGMENT = "CACHE_WRITE_FRAGMENT",
+  CLIENT_READ_QUERY = "CLIENT_READ_QUERY",
+  CLIENT_READ_FRAGMENT = "CLIENT_READ_FRAGMENT",
+  CACHE_READ_QUERY = "CACHE_READ_QUERY",
+  CACHE_READ_FRAGMENT = "CACHE_READ_FRAGMENT",
 }
 
 export interface IMutation {
@@ -136,32 +154,50 @@ export interface IOperation {
 }
 
 export interface IVerboseOperation {
-  id: number;
-  operationType: OperationType;
-  operationName: string | undefined;
+  id: number; // operationId
+  operationType: OperationType; // Type of operation, whether its qquery, mutation, subscription
+  operationName: string | undefined; // Name of operation
   operationString: string;
   variables: OperationVariables | undefined;
-  error: unknown;
-  warning: unknown[] | undefined;
-  result: IOperationResult[];
+  error: unknown; // Error object in case of failure
+  warning: unknown[] | undefined; // apollo client internal warning while reading data from cache
+  result: IOperationResult[]; // results of the operation.
+  optimisticResult?: IOperationResult;
   isOptimistic?: boolean;
-  affectedQueries: DocumentNode[];
+  affectedQueries: DocumentNode[]; // Re-rendered queries due to result of this operation
   isActive?: boolean;
-  duration?: IVerboseOperationDuration | undefined;
+  duration?: IVerboseOperationDuration | undefined; // amount of time spent in each phase
   fetchPolicy: WatchQueryFetchPolicy | undefined;
-  timing: ITiming | undefined;
+  timing: ITiming | undefined; // Time information relative to start recording at 0 seconds
+  status: OperationStatus;
+  cacheSnapshot: unknown;
+}
+
+export enum OperationStatus {
+  InFlight = "InFlight",
+  Succeded = "Succeded",
+  Failed = "Failed",
+  PartialSuccess = "PartialSuccess",
+  Unknown = "Unknown",
+}
+export enum InternalOperationStatus {
+  InFlight = "InFlight",
+  ResultFromCacheSucceded = "ResultFromCacheSucceded",
+  ResultFromNetworkSucceded = "ResultFromNetworkSucceded",
+  FailedToGetResultFromNetwork = "FailedToGetResultFromNetwork",
 }
 
 export interface IVerboseOperationDuration {
-  totalTime: DOMHighResTimeStamp | string;
+  totalTime: DOMHighResTimeStamp;
   requestExecutionTime: DOMHighResTimeStamp | string;
-  cacheWriteTime: DOMHighResTimeStamp | string;
-  cacheDiffTime: DOMHighResTimeStamp | string;
-  cacheBroadcastWatchesTime: DOMHighResTimeStamp | string;
+  cacheWriteTime: DOMHighResTimeStamp;
+  cacheDiffTime: DOMHighResTimeStamp;
+  cacheBroadcastWatchesTime: DOMHighResTimeStamp;
 }
 export interface IOperationResult {
   from: ResultsFrom;
   result: unknown;
+  size: number;
 }
 
 export const Not_Available = "Not Available";
@@ -191,18 +227,42 @@ export interface IAffectedQueryMap {
   [key: string]: IAffectedQuery;
 }
 
+export interface IAffectedQueryInternalMap {
+  [key: string]: IAffectedQueryInternal;
+}
+
 export interface IAffectedQuery {
   affectedQueryName: string;
-  dueToOperations: string[];
+  dueToOperations: IDueToOperation[];
+}
+
+export interface IAffectedQueryInternal {
+  affectedQueryName: string;
+  dueToOperationsMap: { [key: number]: IDueToOperation };
+}
+
+export interface IDueToOperation {
+  id: number; // operationId
+  operationType: OperationType; // Type of operation, whether its qquery, mutation, subscription
+  operationName: string | undefined; // Name of operation
 }
 
 export interface IInspectorTrackingConfig {
   tracking: {
     trackCacheOperation?: boolean;
-    trackVerboseOperations?: boolean;
+    trackVerboseOperations?: boolean | ITrackVerboseOperationsConfig;
     trackAllOperations?: boolean;
   };
   hooks?: IHook[];
+}
+
+export interface ITrackVerboseOperationsConfig {
+  cacheSnapshotAfterOperation?: ICacheSnapshotAfterOperationConfig;
+}
+
+export interface ICacheSnapshotAfterOperationConfig {
+  operationsName: string[];
+  enabled: boolean;
 }
 
 export declare class IHook {

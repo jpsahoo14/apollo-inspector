@@ -1,32 +1,37 @@
-import { OperationDefinitionNode, DocumentNode } from "graphql";
-import { IInspectorTrackingConfig, IApolloInspectorState } from "./interfaces";
+import {
+  OperationDefinitionNode,
+  DocumentNode,
+  getOperationAST,
+} from "graphql";
+import {
+  IInspectorTrackingConfig,
+  IApolloInspectorState,
+  IApolloClient,
+  BaseOperation,
+  ICache,
+  NameNotFound,
+} from "./interfaces";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 
 export const getOperationName = (query: DocumentNode) => {
   const definition =
     query && query.definitions && query.definitions.length > 0
       ? (query.definitions[0] as OperationDefinitionNode)
       : null;
-  const operationName = definition ? definition.name?.value : "name_not_found";
+  const operationName = definition ? definition.name?.value : NameNotFound;
 
   return operationName;
 };
 
-export function getOperationNameV2(doc: DocumentNode): string {
-  const name =
-    doc.definitions
-      .filter(
-        (definition) =>
-          definition.kind === "OperationDefinition" && definition.name
-      )
-      .map((x: OperationDefinitionNode) => x?.name?.value)[0] ||
-    "name_not_found_v2";
+export const getOperationNameV2 = (doc: DocumentNode) => {
+  const node = getOperationAST(doc);
 
-  if (!name) {
+  if (!node) {
     console.log(`no name for query ${doc}`);
   }
 
-  return name;
-}
+  return node?.name?.value || NameNotFound;
+};
 
 export const copyToClipboard = async (obj: unknown) => {
   try {
@@ -51,4 +56,27 @@ export const resumeOperation = (
   const result = cb();
   rawData.currentOperationId = oldCurrentOperationId;
   return result;
+};
+
+export const getAffectedQueries = (
+  client: ApolloClient<NormalizedCacheObject>
+) => {
+  const watchQueries = (client as unknown as IApolloClient).queryManager
+    .queries;
+  const affectedQueries = [];
+  for (const [_key, value] of watchQueries) {
+    if (value.dirty === true) {
+      affectedQueries.push(value.document);
+    }
+  }
+
+  return affectedQueries;
+};
+
+export const setCacheInOperation = (
+  operation: BaseOperation,
+  client: ApolloClient<NormalizedCacheObject>
+) => {
+  const cache = (client.cache as unknown as ICache).data.data;
+  operation.setCacheSnapshot(cache);
 };

@@ -1,12 +1,12 @@
-import { IApolloOperation } from "./apollo-inspector.interface";
-import { IDebugOperation } from "./debug-operation";
-import { QueryOperation } from "./query-operation";
+import {
+  IApolloOperation,
+  IInspectorTrackingConfig,
+} from "./apollo-inspector.interface";
+import { BaseOperation } from "./operation-model/base-operation";
+import { QueryOperation } from "./operation-model";
 import { Timer } from "timer-node";
 
-export type IVerboseOperationMap = Map<
-  number,
-  IDebugOperation | QueryOperation
->;
+export type IVerboseOperationMap = Map<number, BaseOperation | QueryOperation>;
 
 export interface IApolloInspectorState {
   operations: IApolloOperation[];
@@ -14,13 +14,16 @@ export interface IApolloInspectorState {
   allOperations: { [key: number]: IApolloOperation };
   mutationToMutationId: Map<Document, number>;
   operationIdToApolloOpId: Map<number, number>;
-  queryInfoToOperationId: Map<unknown, IDebugOperation>;
+  queryInfoToOperationId: Map<unknown, BaseOperation>;
   currentOperationId: number;
   operationIdCounter: number;
   enableDebug?: boolean;
   timer: Timer;
+  config: IInspectorTrackingConfig;
 }
 
 export type ISetVerboseApolloOperations = (
   updateData: IVerboseOperationMap | ((state: IVerboseOperationMap) => void)
 ) => void;
+
+export const NameNotFound = "Name_Not_Found";

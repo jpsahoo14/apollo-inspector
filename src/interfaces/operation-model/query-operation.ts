@@ -1,22 +1,26 @@
-import { IDebugOperation, IDebugOperationConstructor } from "./debug-operation";
+import { BaseOperation, IBaseOperationConstructor } from "./base-operation";
 import {
   OperationStage,
   ResultsFrom,
   IVerboseOperation,
-  Not_Available,
-} from "./apollo-inspector.interface";
-import { IDiff } from "./apollo-client.interface";
+  InternalOperationStatus,
+  OperationStatus,
+  DataId,
+} from "../apollo-inspector.interface";
+import { IDiff } from "../apollo-client.interface";
 import { print } from "graphql";
 import { WatchQueryFetchPolicy } from "@apollo/client";
-import { getOperationNameV2 } from "../apollo-inspector-utils";
+import { getOperationNameV2 } from "../../apollo-inspector-utils";
 import { cloneDeep } from "lodash-es";
+import sizeOf from "object-sizeof";
 
-export interface IQueryOperationConstructor extends IDebugOperationConstructor {
+export interface IQueryOperationConstructor
+  extends Omit<IBaseOperationConstructor, "dataId"> {
   queryInfo: unknown;
   fetchPolicy: WatchQueryFetchPolicy | "no-cache" | undefined;
 }
 
-export class QueryOperation extends IDebugOperation {
+export class QueryOperation extends BaseOperation {
   private queryInfo: unknown;
   private _operationStage: OperationStage;
   private _operationStages: OperationStage[];
@@ -27,7 +31,6 @@ export class QueryOperation extends IDebugOperation {
   public fetchPolicy: WatchQueryFetchPolicy | "no-cache" | undefined;
 
   constructor({
-    dataId,
     debuggerEnabled,
     errorPolicy,
     fetchPolicy,
@@ -36,15 +39,17 @@ export class QueryOperation extends IDebugOperation {
     queryInfo,
     variables,
     timer,
+    cacheSnapshotConfig,
   }: IQueryOperationConstructor) {
     super({
-      dataId,
+      dataId: DataId.ROOT_QUERY,
       debuggerEnabled,
       errorPolicy,
       operationId,
       query,
       variables,
       timer,
+      cacheSnapshotConfig,
     });
 
     this.queryInfo = queryInfo;
@@ -70,39 +75,67 @@ export class QueryOperation extends IDebugOperation {
     switch (this.fetchPolicy) {
       case "cache-first": {
         if (this.diff?.complete) {
-          this._result.push({ from: ResultsFrom.CACHE, result: clonedResult });
+          this._result.push({
+            from: ResultsFrom.CACHE,
+            result: clonedResult,
+            size: sizeOf(clonedResult),
+          });
+          this.addStatus(InternalOperationStatus.ResultFromCacheSucceded);
         } else {
           this._result.push({
             from: ResultsFrom.NETWORK,
             result: clonedResult,
+            size: sizeOf(clonedResult),
           });
+          this.addStatus(InternalOperationStatus.ResultFromNetworkSucceded);
         }
         return;
       }
       case "cache-and-network": {
         if (this.result.length === 0 && this.diff?.complete) {
-          this._result.push({ from: ResultsFrom.CACHE, result: clonedResult });
+          this._result.push({
+            from: ResultsFrom.CACHE,
+            result: clonedResult,
+            size: sizeOf(clonedResult),
+          });
+          this.addStatus(InternalOperationStatus.ResultFromCacheSucceded);
         } else {
           this._result.push({
             from: ResultsFrom.NETWORK,
             result: clonedResult,
+            size: sizeOf(clonedResult),
           });
+          this.addStatus(InternalOperationStatus.ResultFromNetworkSucceded);
         }
         return;
       }
       case "cache-only": {
-        this._result.push({ from: ResultsFrom.CACHE, result: clonedResult });
+        this._result.push({
+          from: ResultsFrom.CACHE,
+          result: clonedResult,
+          size: sizeOf(clonedResult),
+        });
+        this.addStatus(InternalOperationStatus.ResultFromCacheSucceded);
         return;
       }
       case "network-only":
       case "no-cache": {
-        this._result.push({ from: ResultsFrom.NETWORK, result: clonedResult });
+        this._result.push({
+          from: ResultsFrom.NETWORK,
+          result: clonedResult,
+          size: sizeOf(clonedResult),
+        });
+        this.addStatus(InternalOperationStatus.ResultFromNetworkSucceded);
         return;
       }
     }
 
     debugger;
-    this._result.push({ from: ResultsFrom.UNKNOWN, result: clonedResult });
+    this._result.push({
+      from: ResultsFrom.UNKNOWN,
+      result: clonedResult,
+      size: sizeOf(clonedResult),
+    });
   }
 
   public setOperationStage(opStage: OperationStage) {
@@ -185,7 +218,93 @@ export class QueryOperation extends IDebugOperation {
         cacheBroadcastWatchesTime: this.getCacheBroadcastWatchesTime(),
       },
       timing: this.timing,
+      status: this.getOperationStatus(),
+      cacheSnapshot: this.cacheSnapshot,
     };
+  }
+
+  protected getOperationStatus() {
+    if (this.status.length === 1) {
+      return OperationStatus.InFlight;
+    }
+
+    switch (this.fetchPolicy) {
+      case "cache-first": {
+        if (this.hasCacheFirstOperationSucceded()) {
+          return OperationStatus.Succeded;
+        }
+      }
+      case "cache-and-network": {
+        if (this.hasCacheAndNetWorkOperationSucceded()) {
+          return OperationStatus.Succeded;
+        }
+
+        if (
+          this.hasCacheAndNetworkOperationFailedToGetResultsFromNetworkOnly()
+        ) {
+          return OperationStatus.PartialSuccess;
+        }
+
+        return OperationStatus.Failed;
+      }
+
+      case "cache-only": {
+        if (this.hasCacheOnlyOperationSucceded()) {
+          return OperationStatus.Succeded;
+        }
+
+        return OperationStatus.Failed;
+      }
+
+      case "network-only":
+      case "no-cache": {
+        if (this.hasNetworkOnlyOperationSucceded()) {
+          return OperationStatus.Succeded;
+        }
+
+        return OperationStatus.Failed;
+      }
+
+      default: {
+        return OperationStatus.Unknown;
+      }
+    }
+  }
+
+  private hasNetworkOnlyOperationSucceded() {
+    return this.status.includes(
+      InternalOperationStatus.FailedToGetResultFromNetwork
+    );
+  }
+
+  private hasCacheOnlyOperationSucceded() {
+    return this.status.includes(
+      InternalOperationStatus.ResultFromCacheSucceded
+    );
+  }
+
+  private hasCacheAndNetworkOperationFailedToGetResultsFromNetworkOnly() {
+    return (
+      this.status.includes(InternalOperationStatus.ResultFromCacheSucceded) &&
+      this.status.includes(InternalOperationStatus.FailedToGetResultFromNetwork)
+    );
+  }
+
+  private hasCacheAndNetWorkOperationSucceded() {
+    return (
+      (this.status.includes(InternalOperationStatus.ResultFromCacheSucceded) &&
+        this.status.includes(
+          InternalOperationStatus.ResultFromNetworkSucceded
+        )) ||
+      this.status.includes(InternalOperationStatus.ResultFromNetworkSucceded)
+    );
+  }
+
+  private hasCacheFirstOperationSucceded() {
+    return (
+      this.status.includes(InternalOperationStatus.ResultFromCacheSucceded) ||
+      this.status.includes(InternalOperationStatus.ResultFromNetworkSucceded)
+    );
   }
 
   private doesOperationExist(opStage: OperationStage) {
@@ -229,7 +348,7 @@ export class QueryOperation extends IDebugOperation {
 
     return (
       this.duration.totalResovlerTime ||
-      (this.piggyBackOnExistingObservable ? "Multiplexed" : Not_Available)
+      (this.piggyBackOnExistingObservable ? "Multiplexed" : NaN)
     );
   };
 
@@ -245,7 +364,7 @@ export class QueryOperation extends IDebugOperation {
       }
     }
 
-    return this.duration.totalCacheDiffTime || Not_Available;
+    return this.duration.totalCacheDiffTime || NaN;
   };
 
   private getCacheBroadcastWatchesTime = () => {
@@ -265,6 +384,6 @@ export class QueryOperation extends IDebugOperation {
       }
     }
 
-    return this.duration.totalCacheBroadcastWatchesTime || Not_Available;
+    return this.duration.totalCacheBroadcastWatchesTime || NaN;
   };
 }

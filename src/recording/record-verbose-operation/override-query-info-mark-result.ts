@@ -8,6 +8,7 @@ import {
   IQueryInfo,
   QueryOperation,
 } from "../../interfaces";
+import { getAffectedQueries } from "../../apollo-inspector-utils";
 
 export const overrideQueryInfoMarkResult = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
@@ -150,17 +151,4 @@ const overrideForNewQueries = (
       queryInfo.markResult = originalMarkResult;
     }
   };
-};
-
-const getAffectedQueries = (client: ApolloClient<NormalizedCacheObject>) => {
-  const watchQueries = (client as unknown as IApolloClient).queryManager
-    .queries;
-  const affectedQueries = [];
-  for (const [_key, value] of watchQueries) {
-    if (value.dirty === true) {
-      affectedQueries.push(value.document);
-    }
-  }
-
-  return affectedQueries;
 };

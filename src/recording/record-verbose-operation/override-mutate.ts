@@ -2,8 +2,8 @@ import {
   ApolloClient,
   NormalizedCacheObject,
   MutationOptions,
-  OperationVariables,
 } from "@apollo/client";
+import {} from "../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   DataId,
@@ -12,6 +12,7 @@ import {
   MutationOperation,
   MutationFetchPolicy,
   IApolloClient,
+  getBaseOperationConstructorExtraParams,
 } from "../../interfaces";
 import { RestrictedTimer } from "../../interfaces/restricted-timer";
 
@@ -28,18 +29,17 @@ export const overrideMutate = (
     const {
       mutation,
       variables,
-      // optimisticResponse,
-      // updateQueries,
-      // refetchQueries = [],
-      // awaitRefetchQueries = false,
-      // update: updateWithProxyFn,
+      optimisticResponse,
+      updateQueries,
+      refetchQueries = [],
+      awaitRefetchQueries = false,
+      update: updateWithProxyFn,
       errorPolicy = "none",
       fetchPolicy,
       // context = {},
     } = options;
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const mutateOperation = new MutationOperation({
-        dataId: DataId.ROOT_MUTATION,
         variables,
         query: mutation,
         operationId,
@@ -49,7 +49,11 @@ export const overrideMutate = (
           ("network-only" as MutationFetchPolicy),
         debuggerEnabled: rawData.enableDebug || false,
         errorPolicy,
-        timer: new RestrictedTimer(rawData.timer),
+        optimisticResponse,
+        updateQueries,
+        refetchQueries,
+        awaitRefetchQueries,
+        ...getBaseOperationConstructorExtraParams({ rawData }),
       });
       opMap.set(operationId, mutateOperation);
     });
@@ -62,7 +66,9 @@ export const overrideMutate = (
 
       setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
         const op = opMap.get(operationId) as MutationOperation;
-        op && op.addResult(result);
+        op && op.addResult(result.data);
+        op && op.addError(result.errors);
+
         op && (op.duration.operationExecutionEndTime = performance.now());
       });
       return result;

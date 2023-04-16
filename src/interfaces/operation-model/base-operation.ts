@@ -2,27 +2,33 @@ import {
   DataId,
   IDebugOperationDuration,
   IOperationResult,
-  Not_Available,
   IVerboseOperation,
   OperationType,
   ITiming,
-} from "./apollo-inspector.interface";
+  OperationStatus,
+  InternalOperationStatus,
+  ICacheSnapshotAfterOperationConfig,
+} from "../apollo-inspector.interface";
 import { DocumentNode, print } from "graphql";
 import { ErrorPolicy, OperationVariables } from "@apollo/client";
-import { getOperationNameV2 } from "../apollo-inspector-utils";
-import { RestrictedTimer } from "./restricted-timer";
+import { getOperationNameV2 } from "../../apollo-inspector-utils";
+import { RestrictedTimer } from "../restricted-timer";
+import { IBaseOperation } from "../base-operation.interface";
+import { cloneDeep } from "lodash-es";
+import { isOperationNameInList } from "./operations-util";
 
-export interface IDebugOperationConstructor {
+export interface IBaseOperationConstructor {
   dataId: DataId;
   query: DocumentNode;
   variables: OperationVariables | undefined;
   operationId: number;
   debuggerEnabled: boolean;
-  errorPolicy: ErrorPolicy;
+  errorPolicy: ErrorPolicy | undefined;
   timer: RestrictedTimer;
+  cacheSnapshotConfig?: ICacheSnapshotAfterOperationConfig;
 }
 
-export class IDebugOperation {
+export class BaseOperation implements IBaseOperation {
   protected _dataId: DataId;
   protected _result: IOperationResult[];
   protected _query: DocumentNode;
@@ -33,9 +39,13 @@ export class IDebugOperation {
   protected _id: number;
   protected decimalNumber = 2;
   protected debuggerEnabled: boolean;
-  protected errorPolicy: ErrorPolicy;
+  protected errorPolicy: ErrorPolicy | undefined;
   protected timer: RestrictedTimer;
+  protected status: InternalOperationStatus[];
   protected timing: ITiming;
+  protected cacheSnapshot: any;
+  protected cacheSnapShotConfig: ICacheSnapshotAfterOperationConfig | null;
+  protected operationName: string;
   public duration: IDebugOperationDuration;
   public serverQuery: DocumentNode | undefined;
   public clientQuery: DocumentNode | undefined;
@@ -48,7 +58,8 @@ export class IDebugOperation {
     debuggerEnabled,
     errorPolicy,
     timer,
-  }: IDebugOperationConstructor) {
+    cacheSnapshotConfig,
+  }: IBaseOperationConstructor) {
     if (operationId === 0) {
       debugger;
     }
@@ -63,11 +74,12 @@ export class IDebugOperation {
     this._variables = variables;
     this._id = operationId;
     this._affectedQueries = [];
-
+    this.operationName = getOperationNameV2(query);
     this.serverQuery = undefined;
     this.clientQuery = undefined;
 
     this.debuggerEnabled = debuggerEnabled;
+    this.cacheSnapShotConfig = cacheSnapshotConfig || null;
     this.errorPolicy = errorPolicy;
     const val = false;
     if (val) {
@@ -77,11 +89,17 @@ export class IDebugOperation {
     }
     this.timer = timer;
     this.timing = {
-      queuedAt: "NA",
-      dataWrittenToCacheCompletedAt: "NA",
-      responseReceivedFromServerAt: "NA",
+      queuedAt: NaN,
+      dataWrittenToCacheCompletedAt: NaN,
+      responseReceivedFromServerAt: NaN,
     };
     this.timing.queuedAt = this.timer.getCurrentMs();
+    this.status = [];
+    this.status.push(InternalOperationStatus.InFlight);
+  }
+
+  public addResult(result: unknown): void {
+    throw new Error("Method not implemented.");
   }
 
   public get affectedQueries() {
@@ -109,7 +127,8 @@ export class IDebugOperation {
     if (this.error) {
       debugger;
     }
-    this.error = error;
+    this.error = error || null;
+    this.addStatus(InternalOperationStatus.FailedToGetResultFromNetwork);
   }
 
   public setInActive() {
@@ -137,10 +156,10 @@ export class IDebugOperation {
       }
     }
 
-    return this.duration.totalExecutionTime || Not_Available;
+    return this.duration.totalExecutionTime || NaN;
   };
 
-  protected getCacheWriteTime = () => {
+  public getCacheWriteTime = (): number => {
     if (!this.duration.totalCacheWriteTime) {
       if (this.duration.cacheWriteEnd && this.duration.cacheWriteStart) {
         const value =
@@ -153,7 +172,7 @@ export class IDebugOperation {
       }
     }
 
-    return this.duration.totalCacheWriteTime || Not_Available;
+    return this.duration.totalCacheWriteTime || NaN;
   };
 
   public getOperationInfo(): IVerboseOperation {
@@ -174,10 +193,12 @@ export class IDebugOperation {
       warning: undefined,
       duration: undefined,
       timing: undefined,
+      status: this.getOperationStatus(),
+      cacheSnapshot: this.cacheSnapshot,
     };
   }
 
-  protected getOperationType() {
+  public getOperationType() {
     switch (this._dataId) {
       case DataId.ROOT_QUERY: {
         return OperationType.Query;
@@ -188,7 +209,63 @@ export class IDebugOperation {
       case DataId.ROOT_SUBSCRIPTION: {
         return OperationType.Subscription;
       }
+      case DataId.CLIENT_WRITE_QUERY: {
+        return OperationType.ClientWriteQuery;
+      }
+      case DataId.CLIENT_WRITE_FRAGMENT: {
+        return OperationType.ClientWriteFragment;
+      }
+      case DataId.CACHE_WRITE_QUERY: {
+        return OperationType.CacheWriteQuery;
+      }
+      case DataId.CACHE_WRITE_FRAGMENT: {
+        return OperationType.CacheWriteFragment;
+      }
+
+      case DataId.CLIENT_READ_QUERY: {
+        return OperationType.ClientReadQuery;
+      }
+      case DataId.CLIENT_READ_FRAGMENT: {
+        return OperationType.ClientReadFragment;
+      }
+      case DataId.CACHE_READ_QUERY: {
+        return OperationType.CacheReadQuery;
+      }
+      case DataId.CACHE_READ_FRAGMENT: {
+        return OperationType.CacheReadFragment;
+      }
     }
     return OperationType.Unknown;
+  }
+
+  public addTimingInfo(key: keyof ITiming): void {
+    this.timing[key] = this.timer.getCurrentMs();
+  }
+
+  public addStatus(status: InternalOperationStatus) {
+    this.status.push(status);
+  }
+
+  public setCacheSnapshot(cache: unknown) {
+    if (
+      this.cacheSnapShotConfig?.enabled &&
+      isOperationNameInList(
+        this.getOperationName(),
+        this.cacheSnapShotConfig.operationsName
+      )
+    ) {
+      const startTime = performance.now();
+      this.cacheSnapshot = cloneDeep(cache);
+      const endTime = performance.now();
+      console.log({ cloneDeepTime: `${endTime - startTime}` });
+    }
+  }
+
+  public getOperationName(): string {
+    return this.operationName;
+  }
+
+  protected getOperationStatus() {
+    return OperationStatus.Unknown;
   }
 }

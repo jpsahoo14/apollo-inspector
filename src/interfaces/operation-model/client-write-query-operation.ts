@@ -1,49 +1,49 @@
-import { IDebugOperation, IDebugOperationConstructor } from "./debug-operation";
-import { FetchPolicy } from "@apollo/client";
+import { BaseOperation, IBaseOperationConstructor } from "./base-operation";
 import {
   OperationStage,
   ResultsFrom,
   IVerboseOperation,
-} from "./apollo-inspector.interface";
+  InternalOperationStatus,
+  OperationStatus,
+  DataId,
+} from "../apollo-inspector.interface";
 import { cloneDeep } from "lodash-es";
-import { getOperationNameV2 } from "../apollo-inspector-utils";
+import { getOperationNameV2 } from "../../apollo-inspector-utils";
 import { print } from "graphql";
-import { MutationFetchPolicy } from "./apollo-client.interface";
+import sizeOf from "object-sizeof";
 
-export interface IMutationOperationConstructor
-  extends IDebugOperationConstructor {
-  fetchPolicy: MutationFetchPolicy;
+export interface IClientWriteQueryOperationConstructor
+  extends Omit<IBaseOperationConstructor, "dataId"> {
+  dataId?: DataId;
 }
 
-export class MutationOperation extends IDebugOperation {
+export class ClientWriteQueryOperation extends BaseOperation {
   private _operationStage: OperationStage;
   private _operationStages: OperationStage[];
-
-  public fetchPolicy: MutationFetchPolicy;
 
   constructor({
     dataId,
     debuggerEnabled,
     errorPolicy,
-    fetchPolicy,
     operationId,
     query,
     variables,
     timer,
-  }: IMutationOperationConstructor) {
+    cacheSnapshotConfig,
+  }: IClientWriteQueryOperationConstructor) {
     super({
-      dataId,
+      dataId: dataId || DataId.CLIENT_WRITE_QUERY,
       debuggerEnabled,
       errorPolicy,
       operationId,
       query,
       variables,
       timer,
+      cacheSnapshotConfig,
     });
 
-    this.fetchPolicy = fetchPolicy;
-    this._operationStage = OperationStage.mutate;
-    this._operationStages = [OperationStage.mutate];
+    this._operationStage = OperationStage.writeQuery;
+    this._operationStages = [OperationStage.writeQuery];
   }
 
   public get operationStage() {
@@ -52,7 +52,12 @@ export class MutationOperation extends IDebugOperation {
 
   public addResult(result: unknown) {
     const clonedResult = cloneDeep(result);
-    this._result.push({ from: ResultsFrom.NETWORK, result: clonedResult });
+    this._result.push({
+      from: ResultsFrom.NETWORK,
+      result: clonedResult,
+      size: sizeOf(clonedResult),
+    });
+    this.addStatus(InternalOperationStatus.ResultFromCacheSucceded);
   }
 
   public getOperationInfo(): IVerboseOperation {
@@ -69,16 +74,18 @@ export class MutationOperation extends IDebugOperation {
       affectedQueries: this._affectedQueries,
       isActive: this.active,
       error: this.error,
-      fetchPolicy: this.fetchPolicy,
+      fetchPolicy: undefined,
       warning: undefined,
       duration: {
         totalTime: this.getTotalExecutionTime(),
         cacheWriteTime: this.getCacheWriteTime(),
         requestExecutionTime: "NA",
-        cacheDiffTime: "NA",
-        cacheBroadcastWatchesTime: "NA",
+        cacheDiffTime: NaN,
+        cacheBroadcastWatchesTime: NaN,
       },
       timing: this.timing,
+      status: this.getOperationStatus(),
+      cacheSnapshot: this.cacheSnapshot,
     };
   }
 
@@ -88,5 +95,18 @@ export class MutationOperation extends IDebugOperation {
     if (opStage == OperationStage.addedDataToCache) {
       this.timing.dataWrittenToCacheCompletedAt = this.timer.getCurrentMs();
     }
+  }
+
+  protected getOperationStatus() {
+    if (this.status.includes(InternalOperationStatus.ResultFromCacheSucceded)) {
+      return OperationStatus.Succeded;
+    }
+
+    if (
+      this.status.includes(InternalOperationStatus.FailedToGetResultFromNetwork)
+    ) {
+      return OperationStatus.Failed;
+    }
+    return OperationStatus.Unknown;
   }
 }
