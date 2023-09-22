@@ -2,7 +2,7 @@ import { ApolloClient, NormalizedCacheObject, Cache } from "@apollo/client";
 import {
   getAffectedQueries,
   setCacheInOperation,
-} from "../../apollo-inspector-utils";
+} from "../../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
@@ -11,13 +11,15 @@ import {
   QueryOperation,
   SubscriptionOperation,
   getBaseOperationConstructorExtraParams,
-} from "../../interfaces";
+  IApolloClientObject,
+} from "../../../interfaces";
 
 export const overrideCacheWrite = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const cache = apolloClient.cache;
   const originalWrite = cache.write;
 
@@ -34,7 +36,7 @@ export const overrideCacheWrite = (
         operationId,
         cacheWriteStart,
         cacheWriteEnd,
-        apolloClient,
+        clientObj,
         rawData
       );
     } else if (args[0].dataId === "ROOT_SUBSCRIPTION") {
@@ -42,7 +44,7 @@ export const overrideCacheWrite = (
         setVerboseApolloOperations,
         args,
         rawData,
-        apolloClient
+        clientObj
       );
     }
     return result;
@@ -57,7 +59,7 @@ const addCacheTimeInformationToSubscriptionOperation = (
   setVerboseApolloOperations: ISetVerboseApolloOperations,
   args: [Cache.WriteOptions<any, any>],
   rawData: IApolloInspectorState,
-  apolloClient: ApolloClient<NormalizedCacheObject>
+  clientObj: IApolloClientObject
 ) => {
   setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
     const { query, result, variables } = args[0];
@@ -68,13 +70,13 @@ const addCacheTimeInformationToSubscriptionOperation = (
       operationId,
       debuggerEnabled: rawData.enableDebug || false,
       errorPolicy: "none",
-      ...getBaseOperationConstructorExtraParams({ rawData }),
+      ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
     });
     operation.addResult(result);
     operation.setOperationStage(OperationStage.addedDataToCache);
     operation.addTimingInfo("dataWrittenToCacheCompletedAt");
-    setCacheInOperation(operation, apolloClient);
-    const affectedQueries = getAffectedQueries(apolloClient);
+    setCacheInOperation(operation, clientObj.client);
+    const affectedQueries = getAffectedQueries(clientObj.client);
     operation.addAffectedQueries(affectedQueries);
     opMap.set(operationId, operation);
   });
@@ -85,7 +87,7 @@ const addCacheTimeInformationToOperation = (
   operationId: number,
   cacheWriteStart: number,
   cacheWriteEnd: number,
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState
 ) => {
   setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
@@ -103,7 +105,7 @@ const addCacheTimeInformationToOperation = (
     }
 
     if (operation) {
-      setCacheInOperation(operation, apolloClient);
+      setCacheInOperation(operation, clientObj.client);
     }
     operation?.setOperationStage(OperationStage.addedDataToCache);
   });

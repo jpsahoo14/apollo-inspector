@@ -1,12 +1,16 @@
-import { ISetApolloOperations, IApolloOperation } from "../interfaces";
+import {
+  ISetApolloOperations,
+  IApolloOperation,
+  IApolloClientObject,
+} from "../interfaces";
 import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import { cloneDeep } from "lodash-es";
 
 export const recordOnlyWriteToCacheOperations = (
-  client: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   setApolloOperations: ISetApolloOperations
 ): (() => void) => {
-  const cache = client.cache;
+  const cache = clientObj.client.cache;
   const originalFn = cache.write;
 
   cache.write = function override(...args) {

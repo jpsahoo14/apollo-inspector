@@ -33,6 +33,8 @@ export class SubscriptionOperation extends BaseOperation {
     variables,
     timer,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: ISubscriptionOperationConstructor) {
     super({
       dataId: DataId.ROOT_SUBSCRIPTION,
@@ -43,6 +45,8 @@ export class SubscriptionOperation extends BaseOperation {
       variables,
       timer,
       cacheSnapshotConfig,
+      parentRelatedOperationId,
+      clientId,
     });
 
     this._operationStage = OperationStage.startGraphQLSubscription;
@@ -77,13 +81,18 @@ export class SubscriptionOperation extends BaseOperation {
       operationType: this.getOperationType(),
       operationName,
       operationString,
+      clientId: this.clientId,
       variables: this._variables,
-      result: this._result,
-      affectedQueries: this._affectedQueries,
+      result: cloneDeep(this._result),
+      affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
       error: this.error,
       fetchPolicy: this.fetchPolicy,
       warning: undefined,
+      relatedOperations: {
+        parentOperationId: this.parentRelatedOperationId,
+        childOperationIds: cloneDeep(this.relatedOperations),
+      },
       duration: {
         totalTime: NaN,
         cacheWriteTime: this.getCacheWriteTime(),
@@ -91,7 +100,7 @@ export class SubscriptionOperation extends BaseOperation {
         cacheDiffTime: NaN,
         cacheBroadcastWatchesTime: NaN,
       },
-      timing: this.timing,
+      timing: cloneDeep(this.timing),
       status: OperationStatus.Succeded,
       cacheSnapshot: this.cacheSnapshot,
     };

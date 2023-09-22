@@ -3,10 +3,13 @@ import {
   IInspectorTrackingConfig,
 } from "./apollo-inspector.interface";
 import { BaseOperation } from "./operation-model/base-operation";
-import { QueryOperation } from "./operation-model";
+import { MutationOperation, QueryOperation } from "./operation-model";
 import { Timer } from "timer-node";
 
-export type IVerboseOperationMap = Map<number, BaseOperation | QueryOperation>;
+export type IVerboseOperationMap = Map<
+  number,
+  BaseOperation | QueryOperation | MutationOperation
+>;
 
 export interface IApolloInspectorState {
   operations: IApolloOperation[];
@@ -16,6 +19,7 @@ export interface IApolloInspectorState {
   operationIdToApolloOpId: Map<number, number>;
   queryInfoToOperationId: Map<unknown, BaseOperation>;
   currentOperationId: number;
+  broadcastQueriesOperationId: number;
   operationIdCounter: number;
   enableDebug?: boolean;
   timer: Timer;

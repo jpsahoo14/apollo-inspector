@@ -40,6 +40,8 @@ export class QueryOperation extends BaseOperation {
     variables,
     timer,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: IQueryOperationConstructor) {
     super({
       dataId: DataId.ROOT_QUERY,
@@ -50,6 +52,8 @@ export class QueryOperation extends BaseOperation {
       variables,
       timer,
       cacheSnapshotConfig,
+      parentRelatedOperationId,
+      clientId,
     });
 
     this.queryInfo = queryInfo;
@@ -203,13 +207,18 @@ export class QueryOperation extends BaseOperation {
       operationType: this.getOperationType(),
       operationName,
       operationString,
-      variables: this._variables,
-      result: this._result,
-      affectedQueries: this._affectedQueries,
+      clientId: this.clientId,
+      variables: cloneDeep(this._variables),
+      result: cloneDeep(this._result),
+      affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
       error: this.error,
       fetchPolicy: this.fetchPolicy,
       warning: this.getWarning(),
+      relatedOperations: {
+        parentOperationId: this.parentRelatedOperationId,
+        childOperationIds: cloneDeep(this.relatedOperations),
+      },
       duration: {
         totalTime: this.getTotalExecutionTime(),
         cacheWriteTime: this.getCacheWriteTime(),
@@ -217,7 +226,7 @@ export class QueryOperation extends BaseOperation {
         cacheDiffTime: this.getCacheDiffTime(),
         cacheBroadcastWatchesTime: this.getCacheBroadcastWatchesTime(),
       },
-      timing: this.timing,
+      timing: cloneDeep(this.timing),
       status: this.getOperationStatus(),
       cacheSnapshot: this.cacheSnapshot,
     };
@@ -273,7 +282,7 @@ export class QueryOperation extends BaseOperation {
 
   private hasNetworkOnlyOperationSucceded() {
     return this.status.includes(
-      InternalOperationStatus.FailedToGetResultFromNetwork
+      InternalOperationStatus.ResultFromNetworkSucceded
     );
   }
 

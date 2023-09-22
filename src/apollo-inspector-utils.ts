@@ -42,6 +42,7 @@ export const copyToClipboard = async (obj: unknown) => {
 export const defaultConfig: IInspectorTrackingConfig = {
   tracking: { trackVerboseOperations: true },
   hooks: [],
+  apolloClientIds: [],
 };
 
 export const resumeOperation = (
@@ -65,7 +66,7 @@ export const getAffectedQueries = (
     .queries;
   const affectedQueries = [];
   for (const [_key, value] of watchQueries) {
-    if (value.dirty === true) {
+    if (value.shouldNotify()) {
       affectedQueries.push(value.document);
     }
   }

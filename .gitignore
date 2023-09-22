@@ -58,3 +58,4 @@ dist/*
 
 # npm pack output
 package/*
+src/__test__/

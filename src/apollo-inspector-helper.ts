@@ -1,4 +1,3 @@
-import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
 import {
   IInspectorTrackingConfig,
   IApolloInspectorState,
@@ -9,6 +8,8 @@ import {
   ISetCacheOperations,
   ISetAllOperations,
   ISetVerboseOperations,
+  IDataView,
+  IApolloClientObject,
 } from "./interfaces";
 import {
   recordOnlyWriteToCacheOperations,
@@ -16,9 +17,13 @@ import {
   recordVerboseOperations,
 } from "./recording";
 import { Timer } from "timer-node";
+import { Observer } from "rxjs";
+import { extractOperations } from "./extract-operations";
+import { throttle } from "lodash-es";
 
 export const initializeRawData = (
-  config: IInspectorTrackingConfig
+  config: IInspectorTrackingConfig,
+  listeners?: Observer<IDataView>[]
 ): IDataSetters => {
   const rawData: IApolloInspectorState = {
     operations: [],
@@ -29,18 +34,27 @@ export const initializeRawData = (
     queryInfoToOperationId: new Map(),
     currentOperationId: 0,
     operationIdCounter: 0,
+    broadcastQueriesOperationId: 0,
     enableDebug: false,
     timer: new Timer().start(),
     config,
   };
   (window as any).rawData = rawData;
   const getRawData = () => rawData;
+  const pushDataToObservers: () => void = throttle(() => {
+    listeners?.forEach((listener) => {
+      listener.next(extractOperations(getRawData(), config));
+    });
+  }, 50);
 
   return {
     getRawData,
     setCacheOperations: getSetCacheOperations(getRawData()),
     setAllOperations: getSetAllOperations(getRawData()),
-    setVerboseOperations: getSetVerboseOperations(getRawData()),
+    setVerboseOperations: getSetVerboseOperations(
+      getRawData(),
+      pushDataToObservers
+    ),
     getTimerInstance: () => getRawData().timer,
   };
 };
@@ -72,32 +86,35 @@ const getSetAllOperations = (
 };
 
 const getSetVerboseOperations = (
-  rawData: IApolloInspectorState
+  rawData: IApolloInspectorState,
+  pushDataToObservers: () => void
 ): ISetVerboseOperations => {
   return (
     updateData: ((state: IVerboseOperationMap) => void) | IVerboseOperationMap
   ) => {
     if (typeof updateData === "function") {
       updateData(rawData.verboseOperationsMap);
+      pushDataToObservers();
       return;
     }
     rawData.verboseOperationsMap = updateData;
+    pushDataToObservers();
   };
 };
 
 export const startRecordingInternal = ({
-  client,
+  clientObj,
   config,
   dataSetters,
 }: {
-  client: ApolloClient<NormalizedCacheObject>;
+  clientObj: IApolloClientObject;
   config: IInspectorTrackingConfig;
   dataSetters: IDataSetters;
 }) => {
   const cleanups: (() => void)[] = [];
   if (config.tracking.trackCacheOperation) {
     const cleanUpWriteToCache = recordOnlyWriteToCacheOperations(
-      client,
+      clientObj,
       dataSetters.setCacheOperations
     );
     cleanups.push(cleanUpWriteToCache);
@@ -105,14 +122,14 @@ export const startRecordingInternal = ({
 
   if (config.tracking.trackAllOperations) {
     const cleanUpAllOperation = recordAllOperations(
-      client,
+      clientObj,
       dataSetters.setAllOperations
     );
     cleanups.push(cleanUpAllOperation);
   }
 
   const cleanUpVerboseOperations = recordVerboseOperations(
-    client,
+    clientObj,
     dataSetters.setVerboseOperations,
     dataSetters.getRawData(),
     config

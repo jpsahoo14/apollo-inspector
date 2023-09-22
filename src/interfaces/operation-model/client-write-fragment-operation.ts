@@ -34,6 +34,8 @@ export class ClientWriteFragmentOperation extends BaseOperation {
     timer,
     fragmentName,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: ICientWriteFragmentOperationConstructor) {
     super({
       dataId: dataId || DataId.CLIENT_WRITE_FRAGMENT,
@@ -44,6 +46,8 @@ export class ClientWriteFragmentOperation extends BaseOperation {
       variables,
       timer,
       cacheSnapshotConfig,
+      parentRelatedOperationId,
+      clientId,
     });
 
     this._operationStage = OperationStage.writeFragment;
@@ -75,13 +79,18 @@ export class ClientWriteFragmentOperation extends BaseOperation {
       operationType: this.getOperationType(),
       operationName,
       operationString,
-      variables: this._variables,
-      result: this._result,
-      affectedQueries: this._affectedQueries,
+      clientId: this.clientId,
+      variables: cloneDeep(this._variables),
+      result: cloneDeep(this._result),
+      affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
       error: this.error,
       fetchPolicy: undefined,
       warning: undefined,
+      relatedOperations: {
+        parentOperationId: this.parentRelatedOperationId,
+        childOperationIds: cloneDeep(this.relatedOperations),
+      },
       duration: {
         totalTime: this.getTotalExecutionTime(),
         cacheWriteTime: this.getCacheWriteTime(),
@@ -89,7 +98,7 @@ export class ClientWriteFragmentOperation extends BaseOperation {
         cacheDiffTime: NaN,
         cacheBroadcastWatchesTime: NaN,
       },
-      timing: this.timing,
+      timing: cloneDeep(this.timing),
       status: this.getOperationStatus(),
       cacheSnapshot: this.cacheSnapshot,
     };

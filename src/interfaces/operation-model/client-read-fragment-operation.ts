@@ -18,6 +18,8 @@ export class ClientReadFragmentOperation extends ClientWriteFragmentOperation {
     timer,
     fragmentName,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: ICientWriteFragmentOperationConstructor) {
     super({
       dataId: DataId.CLIENT_READ_FRAGMENT,
@@ -29,6 +31,8 @@ export class ClientReadFragmentOperation extends ClientWriteFragmentOperation {
       timer,
       fragmentName,
       cacheSnapshotConfig,
+      parentRelatedOperationId,
+      clientId,
     });
   }
 }

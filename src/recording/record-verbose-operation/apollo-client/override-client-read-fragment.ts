@@ -4,26 +4,28 @@ import {
   OperationVariables,
   DataProxy,
 } from "@apollo/client";
-import {} from "../../apollo-inspector-utils";
+import {} from "../../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IVerboseOperationMap,
   ClientReadFragmentOperation,
   getBaseOperationConstructorExtraParams,
-} from "../../interfaces";
-import { RestrictedTimer } from "../../interfaces";
+  addRelatedOperations,
+  IApolloClientObject,
+} from "../../../interfaces";
 
 export const overrideClientReadFragment = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const originalReadFragment = apolloClient.readFragment;
 
   apolloClient.readFragment = function override<
     T = any,
-    TVariables = OperationVariables
+    TVariables = OperationVariables,
   >(...args: [DataProxy.Fragment<TVariables, T>]) {
     const options = args[0];
     const { fragment, fragmentName, id, variables } = options;
@@ -42,15 +44,21 @@ export const overrideClientReadFragment = (
         operationId: nextOperationId,
         query: fragment,
         variables: variables as OperationVariables,
-        ...getBaseOperationConstructorExtraParams({ rawData }),
+        ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
       });
 
       opMap.set(nextOperationId, readFragOp);
     });
 
+    const previousOperationId = rawData.currentOperationId;
     rawData.currentOperationId = nextOperationId;
     const result = originalReadFragment.apply(this, args);
-    rawData.currentOperationId = 0;
+    rawData.currentOperationId = previousOperationId;
+
+    setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+      const operation = opMap.get(previousOperationId);
+      addRelatedOperations(operation, nextOperationId);
+    });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(nextOperationId);

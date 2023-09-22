@@ -7,14 +7,16 @@ import {
   IApolloClient,
   IQueryInfo,
   QueryOperation,
-} from "../../interfaces";
-import { getAffectedQueries } from "../../apollo-inspector-utils";
+  IApolloClientObject,
+} from "../../../interfaces";
+import { getAffectedQueries } from "../../../apollo-inspector-utils";
 
 export const overrideQueryInfoMarkResult = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   _setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const revertExistingQueries = overrideForExistingQueries(
     apolloClient,
     rawData
@@ -53,13 +55,14 @@ const overrideForExistingQueries = (
       ) {
         debugger;
       }
+      const previousOperationId = rawData.currentOperationId;
       rawData.currentOperationId = debugOperation?.id || 0;
       rawData.enableDebug &&
         console.log(`APD operationId:${rawData.currentOperationId} markResult`);
 
       debugOperation?.setOperationStage(OperationStage.markResultExecution);
       const result = originalMarkResult.apply(self, args);
-      rawData.currentOperationId = 0;
+      rawData.currentOperationId = previousOperationId;
 
       const affectedQueries = getAffectedQueries(apolloClient);
       debugOperation?.addAffectedQueries(affectedQueries);
@@ -121,12 +124,13 @@ const overrideForNewQueries = (
               console.log(
                 `APD operationId:${debugOperation?.id || 0} markResult`
               );
+            const previousOperationId = rawData.currentOperationId;
             rawData.currentOperationId = debugOperation?.id || 0;
             debugOperation?.setOperationStage(
               OperationStage.markResultExecution
             );
             const result = orignalMarkResult.apply(this, arg);
-            rawData.currentOperationId = 0;
+            rawData.currentOperationId = previousOperationId;
 
             const affectedQueries = getAffectedQueries(apolloClient);
             debugOperation?.addAffectedQueries(affectedQueries);

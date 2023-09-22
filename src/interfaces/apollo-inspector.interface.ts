@@ -4,6 +4,8 @@ import {
   WatchQueryFetchPolicy,
   OperationVariables,
   ApolloLink,
+  ApolloClient,
+  NormalizedCacheObject,
 } from "@apollo/client";
 import { IQueryInfo } from "./apollo-client.interface";
 
@@ -43,6 +45,7 @@ export enum ResultsFrom {
   CACHE = "CACHE",
   NETWORK = "NETWORK",
   UNKNOWN = "UNKNOWN",
+  OPTIMISTIC_RESPONSE = "Optimistic Response",
 }
 
 export interface IDebugOperationDuration {
@@ -154,23 +157,31 @@ export interface IOperation {
 }
 
 export interface IVerboseOperation {
+  affectedQueries: DocumentNode[]; // Re-rendered queries due to result of this operation
+  affectedQueriesDueToOptimisticResponse?: DocumentNode[];
+  cacheSnapshot: unknown;
+  clientId: string;
+  duration?: IVerboseOperationDuration | undefined; // amount of time spent in each phase
+  error: unknown; // Error object in case of failure
+  fetchPolicy: WatchQueryFetchPolicy | undefined;
   id: number; // operationId
-  operationType: OperationType; // Type of operation, whether its qquery, mutation, subscription
+  isActive?: boolean;
+  isOptimistic?: boolean;
   operationName: string | undefined; // Name of operation
   operationString: string;
-  variables: OperationVariables | undefined;
-  error: unknown; // Error object in case of failure
-  warning: unknown[] | undefined; // apollo client internal warning while reading data from cache
-  result: IOperationResult[]; // results of the operation.
+  operationType: OperationType; // Type of operation, whether its qquery, mutation, subscription
   optimisticResult?: IOperationResult;
-  isOptimistic?: boolean;
-  affectedQueries: DocumentNode[]; // Re-rendered queries due to result of this operation
-  isActive?: boolean;
-  duration?: IVerboseOperationDuration | undefined; // amount of time spent in each phase
-  fetchPolicy: WatchQueryFetchPolicy | undefined;
-  timing: ITiming | undefined; // Time information relative to start recording at 0 seconds
+  relatedOperations: IRelatedOperation;
+  result: IOperationResult[]; // results of the operation.
   status: OperationStatus;
-  cacheSnapshot: unknown;
+  timing: ITiming | undefined; // Time information relative to start recording at 0 seconds
+  variables: OperationVariables | undefined;
+  warning: unknown[] | undefined; // apollo client internal warning while reading data from cache
+}
+
+export interface IRelatedOperation {
+  parentOperationId: number;
+  childOperationIds: number[];
 }
 
 export enum OperationStatus {
@@ -254,6 +265,12 @@ export interface IInspectorTrackingConfig {
     trackAllOperations?: boolean;
   };
   hooks?: IHook[];
+  apolloClientIds: string[];
+}
+
+export interface IApolloClientObject {
+  client: ApolloClient<NormalizedCacheObject>;
+  cliendId: string;
 }
 
 export interface ITrackVerboseOperationsConfig {

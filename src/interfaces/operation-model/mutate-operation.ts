@@ -18,7 +18,7 @@ import {
 } from "../apollo-inspector.interface";
 import { cloneDeep } from "lodash-es";
 import { getOperationNameV2 } from "../../apollo-inspector-utils";
-import { print } from "graphql";
+import { DocumentNode, print } from "graphql";
 import { MutationFetchPolicy } from "../apollo-client.interface";
 import sizeOf from "object-sizeof";
 
@@ -35,6 +35,7 @@ export interface IMutationOperationConstructor
 }
 
 export class MutationOperation extends BaseOperation {
+  private static Update_Operations = "Update_Operations";
   private _operationStage: OperationStage;
   private _operationStages: OperationStage[];
   private optimisticResponse: unknown | ((vars: OperationVariables) => unknown);
@@ -44,6 +45,9 @@ export class MutationOperation extends BaseOperation {
     | InternalRefetchQueriesInclude;
   private awaitRefetchQueries?: boolean;
   private onQueryUpdated?: OnQueryUpdated<any>;
+  private relatedOperationsMap: Map<string, number[]>;
+  private affectedWatchQueriesDueToOptimisticResponse: DocumentNode[];
+  public isRunningOptimisticPhase: boolean;
 
   public fetchPolicy: MutationFetchPolicy;
 
@@ -61,6 +65,8 @@ export class MutationOperation extends BaseOperation {
     refetchQueries,
     updateQueries,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: IMutationOperationConstructor) {
     super({
       dataId: DataId.ROOT_MUTATION,
@@ -71,6 +77,8 @@ export class MutationOperation extends BaseOperation {
       variables,
       timer,
       cacheSnapshotConfig,
+      parentRelatedOperationId,
+      clientId,
     });
 
     this.fetchPolicy = fetchPolicy;
@@ -81,6 +89,16 @@ export class MutationOperation extends BaseOperation {
     this.onQueryUpdated = onQueryUpdated;
     this.refetchQueries = refetchQueries;
     this.updateQueries = updateQueries;
+    this.isRunningOptimisticPhase = false;
+    this.relatedOperationsMap = new Map();
+    this.affectedWatchQueriesDueToOptimisticResponse = [];
+
+    optimisticResponse &&
+      this._result.push({
+        from: ResultsFrom.OPTIMISTIC_RESPONSE,
+        result: optimisticResponse,
+        size: sizeOf(optimisticResponse),
+      });
   }
 
   public get operationStage() {
@@ -106,13 +124,21 @@ export class MutationOperation extends BaseOperation {
       operationType: this.getOperationType(),
       operationName,
       operationString,
-      variables: this._variables,
-      result: this._result,
-      affectedQueries: this._affectedQueries,
+      clientId: this.clientId,
+      variables: cloneDeep(this._variables),
+      result: cloneDeep(this._result),
+      affectedQueries: cloneDeep(this._affectedQueries),
+      affectedQueriesDueToOptimisticResponse: cloneDeep(
+        this.affectedWatchQueriesDueToOptimisticResponse
+      ),
       isActive: this.active,
       error: this.error,
       fetchPolicy: this.fetchPolicy,
       warning: undefined,
+      relatedOperations: {
+        parentOperationId: this.parentRelatedOperationId,
+        childOperationIds: cloneDeep(this.relatedOperations),
+      },
       duration: {
         totalTime: this.getTotalExecutionTime(),
         cacheWriteTime: this.getCacheWriteTime(),
@@ -120,9 +146,9 @@ export class MutationOperation extends BaseOperation {
         cacheDiffTime: NaN,
         cacheBroadcastWatchesTime: NaN,
       },
-      timing: this.timing,
+      timing: cloneDeep(this.timing),
       status: this.getOperationStatus(),
-      cacheSnapshot: this.cacheSnapshot,
+      cacheSnapshot: cloneDeep(this.cacheSnapshot),
     };
   }
 
@@ -131,6 +157,28 @@ export class MutationOperation extends BaseOperation {
     this._operationStages.push(opStage);
     if (opStage == OperationStage.addedDataToCache) {
       this.timing.dataWrittenToCacheCompletedAt = this.timer.getCurrentMs();
+    }
+  }
+
+  public addAffectedQueriesDueToOptimisticResponse(
+    queries: DocumentNode[]
+  ): void {
+    this.affectedWatchQueriesDueToOptimisticResponse =
+      this.affectedWatchQueriesDueToOptimisticResponse.concat(queries);
+  }
+
+  public addOperationsCalledFromUpdateCallback(operationId: number) {
+    const operations = this.relatedOperationsMap.get(
+      MutationOperation.Update_Operations
+    );
+    if (operations) {
+      operations.push(operationId);
+    } else {
+      const operations = [operationId];
+      this.relatedOperationsMap.set(
+        MutationOperation.Update_Operations,
+        operations
+      );
     }
   }
 
@@ -145,6 +193,10 @@ export class MutationOperation extends BaseOperation {
       this.status.includes(InternalOperationStatus.FailedToGetResultFromNetwork)
     ) {
       return OperationStatus.Failed;
+    }
+
+    if (this.status.includes(InternalOperationStatus.InFlight)) {
+      return OperationStatus.InFlight;
     }
     return OperationStatus.Unknown;
   }

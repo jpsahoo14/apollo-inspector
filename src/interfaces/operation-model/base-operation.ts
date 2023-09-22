@@ -26,6 +26,8 @@ export interface IBaseOperationConstructor {
   errorPolicy: ErrorPolicy | undefined;
   timer: RestrictedTimer;
   cacheSnapshotConfig?: ICacheSnapshotAfterOperationConfig;
+  parentRelatedOperationId: number;
+  clientId: string;
 }
 
 export class BaseOperation implements IBaseOperation {
@@ -46,6 +48,9 @@ export class BaseOperation implements IBaseOperation {
   protected cacheSnapshot: any;
   protected cacheSnapShotConfig: ICacheSnapshotAfterOperationConfig | null;
   protected operationName: string;
+  protected relatedOperations: number[];
+  protected parentRelatedOperationId: number = 0;
+  protected clientId: string;
   public duration: IDebugOperationDuration;
   public serverQuery: DocumentNode | undefined;
   public clientQuery: DocumentNode | undefined;
@@ -59,6 +64,7 @@ export class BaseOperation implements IBaseOperation {
     errorPolicy,
     timer,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
   }: IBaseOperationConstructor) {
     if (operationId === 0) {
       debugger;
@@ -81,6 +87,8 @@ export class BaseOperation implements IBaseOperation {
     this.debuggerEnabled = debuggerEnabled;
     this.cacheSnapShotConfig = cacheSnapshotConfig || null;
     this.errorPolicy = errorPolicy;
+    this.relatedOperations = [];
+    this.parentRelatedOperationId = parentRelatedOperationId;
     const val = false;
     if (val) {
       console.log({
@@ -128,7 +136,8 @@ export class BaseOperation implements IBaseOperation {
       debugger;
     }
     this.error = error || null;
-    this.addStatus(InternalOperationStatus.FailedToGetResultFromNetwork);
+    this.error &&
+      this.addStatus(InternalOperationStatus.FailedToGetResultFromNetwork);
   }
 
   public setInActive() {
@@ -159,6 +168,10 @@ export class BaseOperation implements IBaseOperation {
     return this.duration.totalExecutionTime || NaN;
   };
 
+  public addRelatedOperation(operationId: number) {
+    this.relatedOperations.push(operationId);
+  }
+
   public getCacheWriteTime = (): number => {
     if (!this.duration.totalCacheWriteTime) {
       if (this.duration.cacheWriteEnd && this.duration.cacheWriteStart) {
@@ -183,13 +196,18 @@ export class BaseOperation implements IBaseOperation {
       id: this._id,
       operationType: this.getOperationType(),
       operationName,
+      clientId: this.clientId,
       operationString,
-      variables: this._variables,
-      result: this._result,
-      affectedQueries: this._affectedQueries,
+      variables: cloneDeep(this._variables),
+      result: cloneDeep(this._result),
+      affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
-      error: this.error,
+      error: cloneDeep(this.error),
       fetchPolicy: undefined,
+      relatedOperations: {
+        parentOperationId: this.parentRelatedOperationId,
+        childOperationIds: cloneDeep(this.relatedOperations),
+      },
       warning: undefined,
       duration: undefined,
       timing: undefined,

@@ -16,6 +16,8 @@ export class CacheWriteQueryOperation extends ClientWriteQueryOperation {
     variables,
     timer,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: ICacheWriteQueryOperationConstructor) {
     super({
       dataId: DataId.CACHE_WRITE_QUERY,
@@ -26,6 +28,8 @@ export class CacheWriteQueryOperation extends ClientWriteQueryOperation {
       variables,
       timer,
       cacheSnapshotConfig,
+      parentRelatedOperationId,
+      clientId,
     });
   }
 }

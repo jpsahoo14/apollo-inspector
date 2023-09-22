@@ -14,7 +14,8 @@ import {
   QueryOperation,
   IVerboseOperationMap,
   IGetObservableFromLinkArgs,
-} from "../../interfaces";
+  IApolloClientObject,
+} from "../../../interfaces";
 
 interface IError {
   operationId: number;
@@ -36,10 +37,11 @@ export interface IExtensions {
 }
 
 export const overrideGetObservableFromLink = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const map: { [key: string]: boolean } = {};
 
   const originalGetObservableFromLink = (

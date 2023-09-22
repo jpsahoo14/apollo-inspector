@@ -41,6 +41,7 @@
     "graphql": "^15.0.0",
     "lodash-es": "4.17.6",
     "object-sizeof": "^2.6.1",
+    "rxjs": "^7.8.1",
     "timer-node": "^5.0.7"
   },
   "peerDependencies": {
