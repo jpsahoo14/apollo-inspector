@@ -24,9 +24,7 @@ export const overrideBroadcastQueries = (
   (apolloClient as unknown as IApolloClient).queryManager.broadcastQueries =
     function override() {
       const currentOperationId = rawData.currentOperationId;
-      console.log(`BroadcastQueries currentOperationId`, {
-        currentOperationId,
-      });
+
       setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
         const operation = opMap.get(currentOperationId);
         if (operation && shouldAddAffectedQueries(operation)) {
