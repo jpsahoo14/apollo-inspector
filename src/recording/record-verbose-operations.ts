@@ -66,7 +66,7 @@ export const recordVerboseOperations = (
   methods.forEach((m) => {
     const revertFun = m.call(
       null,
-      selectedApolloClient,
+      clientObj,
       rawData,
       setVerboseApolloOperations
     );

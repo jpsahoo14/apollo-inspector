@@ -21,8 +21,9 @@ export class ApolloInspector {
   private clientsMap: Map<string, IApolloClientObject>;
 
   constructor(clients: IApolloClientObject[]) {
-    clients.forEach((client) => {
-      this.clientsMap.set(client.cliendId, client);
+    this.clientsMap = new Map<string, IApolloClientObject>();
+    clients.forEach((clientObj: IApolloClientObject) => {
+      this.clientsMap.set(clientObj.cliendId, clientObj);
     });
   }
 

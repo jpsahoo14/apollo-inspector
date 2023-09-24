@@ -65,6 +65,7 @@ export class BaseOperation implements IBaseOperation {
     timer,
     cacheSnapshotConfig,
     parentRelatedOperationId,
+    clientId,
   }: IBaseOperationConstructor) {
     if (operationId === 0) {
       debugger;
@@ -79,6 +80,7 @@ export class BaseOperation implements IBaseOperation {
     this._query = query;
     this._variables = variables;
     this._id = operationId;
+    this.clientId = clientId;
     this._affectedQueries = [];
     this.operationName = getOperationNameV2(query);
     this.serverQuery = undefined;
