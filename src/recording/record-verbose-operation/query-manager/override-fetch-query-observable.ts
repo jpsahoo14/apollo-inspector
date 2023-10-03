@@ -4,7 +4,7 @@ import {
   ErrorPolicy,
   Observable,
 } from "@apollo/client";
-import {} from "../../apollo-inspector-utils";
+import {} from "../../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
@@ -13,14 +13,15 @@ import {
   QueryOperation,
   IVerboseOperationMap,
   getBaseOperationConstructorExtraParams,
-} from "../../interfaces";
-import { RestrictedTimer } from "../../interfaces/restricted-timer";
+  IApolloClientObject,
+} from "../../../interfaces";
 
 export const overrideFetchQueryObservable = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const originalFetchQueryObservable = (
     apolloClient as unknown as IApolloClient
   ).queryManager.fetchQueryObservable;
@@ -50,7 +51,7 @@ export const overrideFetchQueryObservable = (
           fetchPolicy,
           debuggerEnabled: rawData.enableDebug || false,
           errorPolicy,
-          ...getBaseOperationConstructorExtraParams({ rawData }),
+          ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
         });
         opMap.set(nextOperationId, queryOp);
         if (
@@ -65,11 +66,20 @@ export const overrideFetchQueryObservable = (
             );
           debugger;
         }
+        if (
+          rawData.queryInfoToOperationId.has(queryInfo) &&
+          rawData.enableDebug
+        ) {
+          debugger;
+        }
         rawData.queryInfoToOperationId.set(queryInfo, queryOp);
+        return queryOp;
       });
+
+      const previousOperationId = rawData.currentOperationId;
       rawData.currentOperationId = nextOperationId;
       const observable = originalFetchQueryObservable.apply(this, args);
-      rawData.currentOperationId = 0;
+      rawData.currentOperationId = previousOperationId;
 
       const subscription = observable.subscribe({
         next: (result: {
@@ -87,6 +97,8 @@ export const overrideFetchQueryObservable = (
             const op = opMap.get(nextOperationId) as QueryOperation | undefined;
             op?.addResult(result.data);
             op?.addError(result.errors || result.error);
+            rawData.broadcastQueriesOperationId = nextOperationId;
+            return op;
           });
         },
         error: (error: unknown) => {
@@ -98,6 +110,7 @@ export const overrideFetchQueryObservable = (
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             const op = opMap.get(nextOperationId);
             op?.addError(error);
+            return op;
           });
           subscription.unsubscribe();
         },
@@ -111,6 +124,7 @@ export const overrideFetchQueryObservable = (
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             const op = opMap.get(nextOperationId);
             op?.setInActive();
+            return op;
           });
         },
       });
@@ -126,6 +140,7 @@ export const overrideFetchQueryObservable = (
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             const op = opMap.get(nextOperationId);
             op && (op.duration.operationExecutionEndTime = performance.now());
+            return op;
           });
         })
         .catch(() => {
@@ -137,6 +152,7 @@ export const overrideFetchQueryObservable = (
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             const op = opMap.get(nextOperationId);
             op && (op.duration.operationExecutionEndTime = performance.now());
+            return op;
           });
         });
       return observable as unknown as Observable<unknown>;

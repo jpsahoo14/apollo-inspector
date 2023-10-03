@@ -9,17 +9,19 @@ import {
   IApolloInspectorState,
   IVerboseOperationMap,
   getBaseOperationConstructorExtraParams,
-} from "../../interfaces";
-import { getAffectedQueries } from "../../apollo-inspector-utils";
-import { CacheWriteFragmentOperation } from "../../interfaces/";
-import { RestrictedTimer } from "../../interfaces";
+  addRelatedOperations,
+  CacheWriteFragmentOperation,
+  IApolloClientObject,
+} from "../../../interfaces";
+import { getAffectedQueries } from "../../../apollo-inspector-utils";
 import { DocumentNode } from "graphql";
 
 export const overrideCacheWriteFragment = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const cache = apolloClient.cache;
   const originalWriteFragment = cache.writeFragment;
 
@@ -38,39 +40,48 @@ export const overrideCacheWriteFragment = (
       fragmentName,
     } = options;
 
-    if (rawData.currentOperationId === 0) {
-      // Create new operation
-      const nextOperationId = ++rawData.operationIdCounter;
-      const writeFragmentOp = getOperation<TData, TVariables>(
-        rawData,
-        nextOperationId,
-        fragment,
-        variables,
-        fragmentName
-      );
-      writeFragmentOp.addResult(data);
+    // Create new operation
+    const nextOperationId = ++rawData.operationIdCounter;
+    const writeFragmentOp = getOperation<TData, TVariables>(
+      rawData,
+      nextOperationId,
+      fragment,
+      variables,
+      fragmentName,
+      clientObj
+    );
+    writeFragmentOp.addResult(data);
 
-      // set current operationId to new operationId
-      rawData.currentOperationId = nextOperationId;
-      const result = originalWriteFragment.apply(this, args);
-      rawData.currentOperationId = 0;
-
-      setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-        // add the operation to map
-        writeFragmentOp.duration.operationExecutionEndTime = performance.now();
-        opMap.set(nextOperationId, writeFragmentOp);
-      });
-
-      return result;
-    }
-
+    // set current operationId to new operationId
+    const previousOperationId = rawData.currentOperationId;
+    rawData.currentOperationId = nextOperationId;
     const result = originalWriteFragment.apply(this, args);
+    rawData.currentOperationId = previousOperationId;
+
+    setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+      // add the operation to map
+      writeFragmentOp.duration.operationExecutionEndTime = performance.now();
+      opMap.set(nextOperationId, writeFragmentOp);
+      return writeFragmentOp;
+    });
+
+    setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+      const operation = opMap.get(previousOperationId);
+      addRelatedOperations(operation, nextOperationId);
+      return operation;
+    });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       if (rawData.currentOperationId !== 0) {
         const writeFragmentOp = opMap.get(rawData.currentOperationId);
         const affectedQueries = getAffectedQueries(apolloClient);
         writeFragmentOp?.addAffectedQueries(affectedQueries);
+        return writeFragmentOp;
+      } else {
+        const writeFragmentOp = opMap.get(nextOperationId);
+        const affectedQueries = getAffectedQueries(apolloClient);
+        writeFragmentOp?.addAffectedQueries(affectedQueries);
+        return writeFragmentOp;
       }
     });
 
@@ -81,12 +92,14 @@ export const overrideCacheWriteFragment = (
     cache.writeFragment = originalWriteFragment;
   };
 };
+
 const getOperation = <TData, TVariables>(
   rawData: IApolloInspectorState,
   nextOperationId: number,
   fragment: DocumentNode,
   variables: TVariables | undefined,
-  fragmentName: string | undefined
+  fragmentName: string | undefined,
+  clientObj: IApolloClientObject
 ) =>
   new CacheWriteFragmentOperation({
     debuggerEnabled: rawData.enableDebug || false,
@@ -95,5 +108,5 @@ const getOperation = <TData, TVariables>(
     query: fragment,
     variables: variables as OperationVariables,
     fragmentName: fragmentName || "unknown_fragment_name",
-    ...getBaseOperationConstructorExtraParams({ rawData }),
+    ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
   });

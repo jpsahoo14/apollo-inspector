@@ -4,21 +4,23 @@ import {
   OperationVariables,
   DataProxy,
 } from "@apollo/client";
-import {} from "../../apollo-inspector-utils";
+import {} from "../../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IVerboseOperationMap,
   ClientReadQueryOperation,
   getBaseOperationConstructorExtraParams,
-} from "../../interfaces";
-import { RestrictedTimer } from "../../interfaces";
+  addRelatedOperations,
+  IApolloClientObject,
+} from "../../../interfaces";
 
 export const overrideClientReadQuery = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const originalReadQuery = apolloClient.readQuery;
 
   apolloClient.readQuery = function override<
@@ -41,14 +43,22 @@ export const overrideClientReadQuery = (
         operationId: nextOperationId,
         query,
         variables: variables as OperationVariables,
-        ...getBaseOperationConstructorExtraParams({ rawData }),
+        ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
       });
       opMap.set(nextOperationId, readQueryOp);
+      return readQueryOp;
     });
 
+    const previousOperationId = rawData.currentOperationId;
     rawData.currentOperationId = nextOperationId;
     const result = originalReadQuery.apply(this, args);
-    rawData.currentOperationId = 0;
+    rawData.currentOperationId = previousOperationId;
+
+    setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+      const operation = opMap.get(previousOperationId);
+      addRelatedOperations(operation, nextOperationId);
+      return operation;
+    });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(nextOperationId);
@@ -56,6 +66,7 @@ export const overrideClientReadQuery = (
         operation.addResult(result);
         operation.duration.operationExecutionEndTime = performance.now();
       }
+      return operation;
     });
 
     return result;

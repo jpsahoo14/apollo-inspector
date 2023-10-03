@@ -6,13 +6,15 @@ import {
   ICacheDiffParams,
   IVerboseOperationMap,
   QueryOperation,
-} from "../../interfaces";
+  IApolloClientObject,
+} from "../../../interfaces";
 
 export const overrideCacheDiff = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const cache = apolloClient.cache;
   const originalCacheDiff = cache.diff;
 
@@ -37,6 +39,7 @@ export const overrideCacheDiff = (
           operation.duration.cacheDiffEnd = cacheDiffEndTime;
           operation?.setOperationStage(OperationStage.cacheDiff);
         }
+        return operation;
       });
     }
 

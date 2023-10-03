@@ -3,12 +3,11 @@ import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IInspectorTrackingConfig,
-  BaseOperation,
+  IApolloClientObject,
 } from "../interfaces";
 import {
   overrideFetchQueryByPolicy,
   overrideFetchQueryObservable,
-  overrideQueryInfoMarkResult,
   overrideCacheBroadcastWatches,
   overrideCacheDiff,
   overrideCacheWrite,
@@ -23,24 +22,27 @@ import {
   overrideClientReadFragment,
   overrideClientReadQuery,
   overrideMarkMutationResult,
+  overrideMarkMutationOptimistic,
+  overrideBroadcastQueries,
+  overrideGetResultsFromLink,
 } from "./record-verbose-operation";
 import { trackLink, setLinkInFront } from "../links";
 
 export const recordVerboseOperations = (
-  client: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   setVerboseApolloOperations: ISetVerboseApolloOperations,
   rawData: IApolloInspectorState,
   config: IInspectorTrackingConfig
 ) => {
-  const selectedApolloClient: ApolloClient<NormalizedCacheObject> = client;
+  const selectedApolloClient: ApolloClient<NormalizedCacheObject> =
+    clientObj.client;
 
   const methods: ((
-    apolloClient: ApolloClient<NormalizedCacheObject>,
+    clientObj: IApolloClientObject,
     rawData: IApolloInspectorState,
     setVerboseApolloOperations: ISetVerboseApolloOperations
   ) => () => void)[] = [
     overrideFetchQueryObservable,
-    overrideQueryInfoMarkResult,
     overrideFetchQueryByPolicy,
     overrideCacheBroadcastWatches,
     overrideCacheDiff,
@@ -56,12 +58,15 @@ export const recordVerboseOperations = (
     overrideClientReadFragment,
     overrideClientReadQuery,
     overrideMarkMutationResult,
+    overrideMarkMutationOptimistic,
+    overrideBroadcastQueries,
+    overrideGetResultsFromLink,
   ];
   const revertMethods: (() => void)[] = [];
   methods.forEach((m) => {
     const revertFun = m.call(
       null,
-      selectedApolloClient,
+      clientObj,
       rawData,
       setVerboseApolloOperations
     );
@@ -69,7 +74,7 @@ export const recordVerboseOperations = (
   });
 
   const revertTrackLink = setLinkInFront(
-    client,
+    selectedApolloClient,
     trackLink(rawData, setVerboseApolloOperations)
   );
   revertMethods.push(revertTrackLink);
@@ -80,7 +85,7 @@ export const recordVerboseOperations = (
 
   config.hooks?.forEach((hook) => {
     const link = hook.getLink(getOperationId);
-    const revertLink = setLinkInFront(client, link);
+    const revertLink = setLinkInFront(selectedApolloClient, link);
     revertMethods.push(revertLink);
   });
 

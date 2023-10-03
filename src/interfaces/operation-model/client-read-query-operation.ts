@@ -16,6 +16,8 @@ export class ClientReadQueryOperation extends ClientWriteQueryOperation {
     variables,
     timer,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: IClientReadQueryOperation) {
     super({
       dataId: DataId.CLIENT_READ_QUERY,
@@ -26,6 +28,8 @@ export class ClientReadQueryOperation extends ClientWriteQueryOperation {
       variables,
       timer,
       cacheSnapshotConfig,
+      parentRelatedOperationId,
+      clientId,
     });
   }
 }

@@ -6,13 +6,15 @@ import {
   IApolloClientCache,
   IVerboseOperationMap,
   QueryOperation,
-} from "../../interfaces";
+  IApolloClientObject,
+} from "../../../interfaces";
 
 export const overrideCacheBroadcastWatches = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const cache = apolloClient.cache;
   const originalBroadcastWatches = (cache as unknown as IApolloClientCache)
     .broadcastWatches;
@@ -40,6 +42,7 @@ export const overrideCacheBroadcastWatches = (
             cacheBroadcastWatchEndTime;
         }
         operation?.setOperationStage(OperationStage.cacheBroadcastWatches);
+        return operation;
       });
     }
 

@@ -2,6 +2,8 @@ import {
   IApolloInspectorState,
   IDataView,
   IInspectorTrackingConfig,
+  IVerboseOperation,
+  OperationType,
 } from "../interfaces";
 import { extractCacheOperations } from "./extract-cache-operations";
 import { extractAllOperationsData } from "./extract-all-operations";
@@ -19,15 +21,33 @@ export const extractOperations = (
     verboseOperations: null,
   };
 
-  result.operations = extractCacheOperations(rawData.operations);
   result.allOperations = extractAllOperationsData(rawData.allOperations);
   result.verboseOperations = extractVerboseOperationsData(
     rawData.verboseOperationsMap,
     config
   );
+  result.operations = result.verboseOperations.filter(
+    (operation: IVerboseOperation) => {
+      const operationType = operation.operationType;
+
+      switch (operationType) {
+        case OperationType.Query:
+        case OperationType.Mutation:
+        case OperationType.Subscription: {
+          return true;
+        }
+
+        default: {
+          if (operation.relatedOperations.parentOperationId !== 0) {
+            return false;
+          }
+          return true;
+        }
+      }
+    }
+  );
   result.affectedQueriesOperations = extractAffectedQueriesData(
     rawData.verboseOperationsMap
   );
-
   return result;
 };

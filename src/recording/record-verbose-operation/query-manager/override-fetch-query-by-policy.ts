@@ -6,13 +6,15 @@ import {
   IFetchQueryByPolicy,
   IVerboseOperationMap,
   QueryOperation,
-} from "../../interfaces";
+  IApolloClientObject,
+} from "../../../interfaces";
 
 export const overrideFetchQueryByPolicy = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const map: { [key: string]: boolean } = {};
 
   const originalFetchQueryByPolicy = (apolloClient as unknown as IApolloClient)
@@ -47,6 +49,7 @@ export const overrideFetchQueryByPolicy = (
           op.fetchPolicy = fetchPolicy;
           op.diff = diff;
         }
+        return op;
       });
       return result;
     };

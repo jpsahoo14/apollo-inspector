@@ -1,16 +1,26 @@
 import { random } from "lodash-es";
 import { IApolloInspectorState } from "../apollo-inspector-debug-interfaces";
 import { RestrictedTimer } from "../restricted-timer";
-import { IBaseOperationConstructor } from "./base-operation";
+import { BaseOperation, IBaseOperationConstructor } from "./base-operation";
+import { MutationOperation } from "./mutate-operation";
+import { QueryOperation } from "./query-operation";
+import { SubscriptionOperation } from "./subscription-operation";
+import { DataId, IApolloClientObject } from "../apollo-inspector.interface";
 
 export interface IGetBaseOperationConstructorExtraParams {
   rawData: IApolloInspectorState;
 }
 export const getBaseOperationConstructorExtraParams = (
-  params: IGetBaseOperationConstructorExtraParams
-): Pick<IBaseOperationConstructor, "timer" | "cacheSnapshotConfig"> => {
+  params: IGetBaseOperationConstructorExtraParams,
+  clientObj: IApolloClientObject
+): Pick<
+  IBaseOperationConstructor,
+  "timer" | "cacheSnapshotConfig" | "parentRelatedOperationId" | "clientId"
+> => {
   const { rawData } = params;
   return {
+    clientId: clientObj.clientId,
+    parentRelatedOperationId: rawData.currentOperationId,
     timer: new RestrictedTimer(rawData.timer),
     cacheSnapshotConfig:
       typeof rawData.config.tracking.trackVerboseOperations === "object"
@@ -35,4 +45,23 @@ export const isOperationNameInList = (
   }
 
   return true;
+};
+
+export const addRelatedOperations = (
+  operation: BaseOperation | QueryOperation | undefined | MutationOperation,
+  relatedOperationId: number
+) => {
+  const dataId = operation?.dataId;
+
+  switch (dataId) {
+    case DataId.ROOT_MUTATION: {
+      (operation as MutationOperation).addOperationsCalledFromUpdateCallback(
+        relatedOperationId
+      );
+    }
+
+    default: {
+      operation?.addRelatedOperation(relatedOperationId);
+    }
+  }
 };

@@ -18,4 +18,6 @@ export interface IBaseOperation {
   addTimingInfo(key: keyof ITiming): void;
   setCacheSnapshot(cache: unknown): void;
   getOperationName(): string;
+  addRelatedOperation(operationId: number): void;
+  markDirty(): void;
 }

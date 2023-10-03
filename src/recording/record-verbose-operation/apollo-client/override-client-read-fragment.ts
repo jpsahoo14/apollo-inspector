@@ -4,21 +4,23 @@ import {
   OperationVariables,
   DataProxy,
 } from "@apollo/client";
-import {} from "../../apollo-inspector-utils";
+import {} from "../../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IVerboseOperationMap,
   ClientReadFragmentOperation,
   getBaseOperationConstructorExtraParams,
-} from "../../interfaces";
-import { RestrictedTimer } from "../../interfaces";
+  addRelatedOperations,
+  IApolloClientObject,
+} from "../../../interfaces";
 
 export const overrideClientReadFragment = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const originalReadFragment = apolloClient.readFragment;
 
   apolloClient.readFragment = function override<
@@ -42,15 +44,23 @@ export const overrideClientReadFragment = (
         operationId: nextOperationId,
         query: fragment,
         variables: variables as OperationVariables,
-        ...getBaseOperationConstructorExtraParams({ rawData }),
+        ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
       });
 
       opMap.set(nextOperationId, readFragOp);
+      return readFragOp;
     });
 
+    const previousOperationId = rawData.currentOperationId;
     rawData.currentOperationId = nextOperationId;
     const result = originalReadFragment.apply(this, args);
-    rawData.currentOperationId = 0;
+    rawData.currentOperationId = previousOperationId;
+
+    setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+      const operation = opMap.get(previousOperationId);
+      addRelatedOperations(operation, nextOperationId);
+      return operation;
+    });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(nextOperationId);
@@ -58,6 +68,7 @@ export const overrideClientReadFragment = (
       if (operation) {
         operation.addResult(result);
         operation.duration.operationExecutionEndTime = performance.now();
+        return operation;
       }
     });
 

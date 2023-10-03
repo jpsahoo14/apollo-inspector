@@ -17,6 +17,8 @@ export class CacheWriteFragmentOperation extends ClientWriteFragmentOperation {
     timer,
     fragmentName,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: ICacheWriteFragmentOperation) {
     super({
       dataId: DataId.CACHE_WRITE_FRAGMENT,
@@ -28,6 +30,8 @@ export class CacheWriteFragmentOperation extends ClientWriteFragmentOperation {
       timer,
       fragmentName,
       cacheSnapshotConfig,
+      parentRelatedOperationId,
+      clientId,
     });
   }
 }

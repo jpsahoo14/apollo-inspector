@@ -4,6 +4,7 @@ import {
 } from "./apollo-inspector-debug-interfaces";
 import { IApolloOperation, IAllOperations } from "./apollo-inspector.interface";
 import { Timer } from "timer-node";
+import { BaseOperation } from "./operation-model/base-operation";
 
 export interface IDataSetters {
   getRawData: () => IApolloInspectorState;
@@ -22,5 +23,7 @@ export type ISetAllOperations = (
 ) => void;
 
 export type ISetVerboseOperations = (
-  updateData: IVerboseOperationMap | ((state: IVerboseOperationMap) => void)
+  updateData:
+    | IVerboseOperationMap
+    | ((state: IVerboseOperationMap) => BaseOperation | null | undefined)
 ) => void;

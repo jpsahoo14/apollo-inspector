@@ -4,7 +4,7 @@ import {
   OperationVariables,
   DataProxy,
 } from "@apollo/client";
-import {} from "../../apollo-inspector-utils";
+import {} from "../../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
@@ -12,14 +12,16 @@ import {
   ClientWriteQueryOperation,
   BaseOperation,
   getBaseOperationConstructorExtraParams,
-} from "../../interfaces";
-import { RestrictedTimer } from "../../interfaces";
+  addRelatedOperations,
+  IApolloClientObject,
+} from "../../../interfaces";
 
 export const overrideClientWriteQuery = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const originalWriteQuery = apolloClient.writeQuery;
 
   apolloClient.writeQuery = function override<
@@ -42,16 +44,24 @@ export const overrideClientWriteQuery = (
         operationId: nextOperationId,
         query,
         variables: variables as OperationVariables,
-        ...getBaseOperationConstructorExtraParams({ rawData }),
+        ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
       });
       writeQueryOp.addResult(data);
 
       opMap.set(nextOperationId, writeQueryOp);
+      return writeQueryOp;
     });
 
+    const previousOperationId = rawData.currentOperationId;
     rawData.currentOperationId = nextOperationId;
     const result = originalWriteQuery.apply(this, args);
-    rawData.currentOperationId = 0;
+    rawData.currentOperationId = previousOperationId;
+
+    setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+      const operation = opMap.get(previousOperationId);
+      addRelatedOperations(operation, nextOperationId);
+      return operation;
+    });
 
     updateOperationEndExecutionTime(
       setVerboseApolloOperations,
@@ -76,5 +86,6 @@ const updateOperationEndExecutionTime = (
     if (operation) {
       operation.duration.operationExecutionEndTime = performance.now();
     }
+    return operation;
   });
 };

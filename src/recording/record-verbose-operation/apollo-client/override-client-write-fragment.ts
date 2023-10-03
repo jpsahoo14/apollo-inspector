@@ -4,21 +4,23 @@ import {
   OperationVariables,
   DataProxy,
 } from "@apollo/client";
-import {} from "../../apollo-inspector-utils";
+import {} from "../../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
   IVerboseOperationMap,
   ClientWriteFragmentOperation,
   getBaseOperationConstructorExtraParams,
-} from "../../interfaces";
-import { RestrictedTimer } from "../../interfaces";
+  addRelatedOperations,
+  IApolloClientObject,
+} from "../../../interfaces";
 
 export const overrideClientWriteFragment = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const originalWriteFragment = apolloClient.writeFragment;
 
   apolloClient.writeFragment = function override<
@@ -50,15 +52,23 @@ export const overrideClientWriteFragment = (
         query: fragment,
         variables: variables as OperationVariables,
         fragmentName: fragmentName || "",
-        ...getBaseOperationConstructorExtraParams({ rawData }),
+        ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
       });
       writeFragmentOp.addResult(data);
       opMap.set(nextOperationId, writeFragmentOp);
+      return writeFragmentOp;
     });
 
+    const previousOperationId = rawData.currentOperationId;
     rawData.currentOperationId = nextOperationId;
     const result = originalWriteFragment.apply(this, args);
-    rawData.currentOperationId = 0;
+    rawData.currentOperationId = previousOperationId;
+
+    setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+      const operation = opMap.get(previousOperationId);
+      addRelatedOperations(operation, nextOperationId);
+      return operation;
+    });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation: ClientWriteFragmentOperation | undefined = opMap.get(
@@ -68,6 +78,7 @@ export const overrideClientWriteFragment = (
       if (operation) {
         operation.duration.operationExecutionEndTime = performance.now();
       }
+      return operation;
     });
 
     return result;

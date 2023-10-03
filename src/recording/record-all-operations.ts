@@ -4,6 +4,7 @@ import {
   IAllOperations,
   IApolloClient,
   IFetchQueryObservableParams,
+  IApolloClientObject,
 } from "../interfaces";
 import {
   ApolloClient,
@@ -19,9 +20,10 @@ import { cloneDeep } from "lodash-es";
 type INextParams = [{ data: unknown }];
 
 export const recordAllOperations = (
-  client: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   setAllApolloOperations: ISetAllApolloOperations
 ) => {
+  const { client } = clientObj;
   const cleanUpFetchQueryObservable = trackFetchQueryObservable(
     client,
     setAllApolloOperations

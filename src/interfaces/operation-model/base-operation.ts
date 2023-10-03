@@ -26,6 +26,8 @@ export interface IBaseOperationConstructor {
   errorPolicy: ErrorPolicy | undefined;
   timer: RestrictedTimer;
   cacheSnapshotConfig?: ICacheSnapshotAfterOperationConfig;
+  parentRelatedOperationId: number;
+  clientId: string;
 }
 
 export class BaseOperation implements IBaseOperation {
@@ -38,6 +40,8 @@ export class BaseOperation implements IBaseOperation {
   protected active: boolean;
   protected _id: number;
   protected decimalNumber = 2;
+  protected isDirty: boolean;
+  protected computedOperation: IVerboseOperation | null;
   protected debuggerEnabled: boolean;
   protected errorPolicy: ErrorPolicy | undefined;
   protected timer: RestrictedTimer;
@@ -46,6 +50,9 @@ export class BaseOperation implements IBaseOperation {
   protected cacheSnapshot: any;
   protected cacheSnapShotConfig: ICacheSnapshotAfterOperationConfig | null;
   protected operationName: string;
+  protected relatedOperations: number[];
+  protected parentRelatedOperationId: number = 0;
+  protected clientId: string;
   public duration: IDebugOperationDuration;
   public serverQuery: DocumentNode | undefined;
   public clientQuery: DocumentNode | undefined;
@@ -59,6 +66,8 @@ export class BaseOperation implements IBaseOperation {
     errorPolicy,
     timer,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: IBaseOperationConstructor) {
     if (operationId === 0) {
       debugger;
@@ -73,14 +82,19 @@ export class BaseOperation implements IBaseOperation {
     this._query = query;
     this._variables = variables;
     this._id = operationId;
+    this.clientId = clientId;
     this._affectedQueries = [];
     this.operationName = getOperationNameV2(query);
     this.serverQuery = undefined;
     this.clientQuery = undefined;
 
+    this.isDirty = true;
+    this.computedOperation = null;
     this.debuggerEnabled = debuggerEnabled;
     this.cacheSnapShotConfig = cacheSnapshotConfig || null;
     this.errorPolicy = errorPolicy;
+    this.relatedOperations = [];
+    this.parentRelatedOperationId = parentRelatedOperationId;
     const val = false;
     if (val) {
       console.log({
@@ -125,10 +139,13 @@ export class BaseOperation implements IBaseOperation {
 
   public addError(error: unknown) {
     if (this.error) {
-      debugger;
+      if (this.debuggerEnabled) {
+        debugger;
+      }
     }
     this.error = error || null;
-    this.addStatus(InternalOperationStatus.FailedToGetResultFromNetwork);
+    this.error &&
+      this.addStatus(InternalOperationStatus.FailedToGetResultFromNetwork);
   }
 
   public setInActive() {
@@ -159,6 +176,10 @@ export class BaseOperation implements IBaseOperation {
     return this.duration.totalExecutionTime || NaN;
   };
 
+  public addRelatedOperation(operationId: number) {
+    this.relatedOperations.push(operationId);
+  }
+
   public getCacheWriteTime = (): number => {
     if (!this.duration.totalCacheWriteTime) {
       if (this.duration.cacheWriteEnd && this.duration.cacheWriteStart) {
@@ -176,26 +197,38 @@ export class BaseOperation implements IBaseOperation {
   };
 
   public getOperationInfo(): IVerboseOperation {
+    if (!this.isDirty && this.computedOperation) {
+      return this.computedOperation;
+    }
     const operationName = getOperationNameV2(this._query);
     const operationString = print(this._query);
 
-    return {
+    const operation = {
       id: this._id,
       operationType: this.getOperationType(),
       operationName,
+      clientId: this.clientId,
       operationString,
-      variables: this._variables,
-      result: this._result,
-      affectedQueries: this._affectedQueries,
+      variables: cloneDeep(this._variables),
+      result: cloneDeep(this._result),
+      affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
-      error: this.error,
+      error: this.getError(),
       fetchPolicy: undefined,
+      relatedOperations: {
+        parentOperationId: this.parentRelatedOperationId,
+        childOperationIds: cloneDeep(this.relatedOperations),
+      },
       warning: undefined,
       duration: undefined,
       timing: undefined,
       status: this.getOperationStatus(),
       cacheSnapshot: this.cacheSnapshot,
     };
+
+    this.isDirty = false;
+    this.computedOperation = operation;
+    return operation;
   }
 
   public getOperationType() {
@@ -246,6 +279,10 @@ export class BaseOperation implements IBaseOperation {
     this.status.push(status);
   }
 
+  public markDirty(): void {
+    this.isDirty = true;
+  }
+
   public setCacheSnapshot(cache: unknown) {
     if (
       this.cacheSnapShotConfig?.enabled &&
@@ -267,5 +304,14 @@ export class BaseOperation implements IBaseOperation {
 
   protected getOperationStatus() {
     return OperationStatus.Unknown;
+  }
+  protected getError() {
+    try {
+      if (this.error) {
+        const value = JSON.parse(JSON.stringify(this.error));
+        return value;
+      }
+      return null;
+    } catch {}
   }
 }

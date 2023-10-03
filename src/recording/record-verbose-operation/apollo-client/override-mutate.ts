@@ -3,7 +3,7 @@ import {
   NormalizedCacheObject,
   MutationOptions,
 } from "@apollo/client";
-import {} from "../../apollo-inspector-utils";
+import {} from "../../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   DataId,
@@ -13,14 +13,16 @@ import {
   MutationFetchPolicy,
   IApolloClient,
   getBaseOperationConstructorExtraParams,
-} from "../../interfaces";
-import { RestrictedTimer } from "../../interfaces/restricted-timer";
+  IApolloClientObject,
+} from "../../../interfaces";
+import { RestrictedTimer } from "../../../interfaces/restricted-timer";
 
 export const overrideMutate = (
-  apolloClient: ApolloClient<NormalizedCacheObject>,
+  clientObj: IApolloClientObject,
   rawData: IApolloInspectorState,
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
+  const apolloClient = clientObj.client;
   const originalMutate = apolloClient.mutate;
   const queryManager = (apolloClient as unknown as IApolloClient).queryManager;
   apolloClient.mutate = async function override(...args: unknown[]) {
@@ -53,15 +55,17 @@ export const overrideMutate = (
         updateQueries,
         refetchQueries,
         awaitRefetchQueries,
-        ...getBaseOperationConstructorExtraParams({ rawData }),
+        ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
       });
       opMap.set(operationId, mutateOperation);
+      return mutateOperation;
     });
 
     try {
+      const previousOperationId = rawData.currentOperationId;
       rawData.currentOperationId = operationId;
       const resultPromise = originalMutate.apply(this, args);
-      rawData.currentOperationId = 0;
+      rawData.currentOperationId = previousOperationId;
       const result = await resultPromise;
 
       setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
@@ -70,6 +74,7 @@ export const overrideMutate = (
         op && op.addError(result.errors);
 
         op && (op.duration.operationExecutionEndTime = performance.now());
+        return op;
       });
       return result;
     } catch (error) {
@@ -77,6 +82,7 @@ export const overrideMutate = (
         const op = opMap.get(operationId) as MutationOperation;
         op && op.addError(error);
         op && (op.duration.operationExecutionEndTime = performance.now());
+        return op;
       });
 
       throw error;

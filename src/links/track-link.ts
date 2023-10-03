@@ -26,6 +26,7 @@ export const trackLink = (
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const op = opMap.get(operationId);
       op && (op.duration.linkEnterTime = linkEnterTime);
+      return op;
     });
 
     return new Observable((observer) => {
@@ -37,6 +38,7 @@ export const trackLink = (
         if (op) {
           op.duration.linkExecutionStartTime = linkExecutionStartTime;
           op.setOperationStage(OperationStage.linkExecutionStart);
+          return op;
         }
       });
 
@@ -58,6 +60,7 @@ export const trackLink = (
                 op.duration.linkNextExecutionTime?.push(linkNextExecutionTime);
                 op.setOperationStage(OperationStage.linkNextExecution);
                 op.addTimingInfo("responseReceivedFromServerAt");
+                return op;
               }
             });
 
@@ -88,6 +91,7 @@ export const trackLink = (
               if (op) {
                 op.duration.linkErrorExecutionTime = linkErrorExecutionTime;
                 op.addTimingInfo("responseReceivedFromServerAt");
+                return op;
               }
             });
 
@@ -110,6 +114,7 @@ export const trackLink = (
                 op.duration.linkCompleteExecutionTime =
                   linkCompleteExecutionTime;
                 op.setOperationStage(OperationStage.linkCompleteExecution);
+                return op;
               }
             });
 

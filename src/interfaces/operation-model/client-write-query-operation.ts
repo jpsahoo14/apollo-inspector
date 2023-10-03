@@ -30,6 +30,8 @@ export class ClientWriteQueryOperation extends BaseOperation {
     variables,
     timer,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: IClientWriteQueryOperationConstructor) {
     super({
       dataId: dataId || DataId.CLIENT_WRITE_QUERY,
@@ -40,6 +42,8 @@ export class ClientWriteQueryOperation extends BaseOperation {
       variables,
       timer,
       cacheSnapshotConfig,
+      parentRelatedOperationId,
+      clientId,
     });
 
     this._operationStage = OperationStage.writeQuery;
@@ -61,20 +65,29 @@ export class ClientWriteQueryOperation extends BaseOperation {
   }
 
   public getOperationInfo(): IVerboseOperation {
+    if (!this.isDirty && this.computedOperation) {
+      return this.computedOperation;
+    }
+
     const operationName = getOperationNameV2(this._query);
     const operationString = print(this._query);
 
-    return {
+    const operation = {
       id: this._id,
       operationType: this.getOperationType(),
       operationName,
       operationString,
-      variables: this._variables,
-      result: this._result,
-      affectedQueries: this._affectedQueries,
+      clientId: this.clientId,
+      variables: cloneDeep(this._variables),
+      result: cloneDeep(this._result),
+      affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
-      error: this.error,
+      error: this.getError(),
       fetchPolicy: undefined,
+      relatedOperations: {
+        parentOperationId: this.parentRelatedOperationId,
+        childOperationIds: cloneDeep(this.relatedOperations),
+      },
       warning: undefined,
       duration: {
         totalTime: this.getTotalExecutionTime(),
@@ -83,10 +96,14 @@ export class ClientWriteQueryOperation extends BaseOperation {
         cacheDiffTime: NaN,
         cacheBroadcastWatchesTime: NaN,
       },
-      timing: this.timing,
+      timing: cloneDeep(this.timing),
       status: this.getOperationStatus(),
       cacheSnapshot: this.cacheSnapshot,
     };
+
+    this.isDirty = false;
+    this.computedOperation = operation;
+    return operation;
   }
 
   public setOperationStage(opStage: OperationStage) {

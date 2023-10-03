@@ -40,6 +40,8 @@ export class QueryOperation extends BaseOperation {
     variables,
     timer,
     cacheSnapshotConfig,
+    parentRelatedOperationId,
+    clientId,
   }: IQueryOperationConstructor) {
     super({
       dataId: DataId.ROOT_QUERY,
@@ -50,6 +52,8 @@ export class QueryOperation extends BaseOperation {
       variables,
       timer,
       cacheSnapshotConfig,
+      parentRelatedOperationId,
+      clientId,
     });
 
     this.queryInfo = queryInfo;
@@ -130,7 +134,9 @@ export class QueryOperation extends BaseOperation {
       }
     }
 
-    debugger;
+    if (this.debuggerEnabled) {
+      debugger;
+    }
     this._result.push({
       from: ResultsFrom.UNKNOWN,
       result: clonedResult,
@@ -195,21 +201,30 @@ export class QueryOperation extends BaseOperation {
   }
 
   public getOperationInfo(): IVerboseOperation {
+    if (!this.isDirty && this.computedOperation) {
+      return this.computedOperation;
+    }
+
     const operationName = getOperationNameV2(this._query);
     const operationString = print(this._query);
 
-    return {
+    const operation = {
       id: this._id,
       operationType: this.getOperationType(),
       operationName,
       operationString,
-      variables: this._variables,
-      result: this._result,
-      affectedQueries: this._affectedQueries,
+      clientId: this.clientId,
+      variables: cloneDeep(this._variables),
+      result: cloneDeep(this._result),
+      affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
-      error: this.error,
+      error: this.getError(),
       fetchPolicy: this.fetchPolicy,
       warning: this.getWarning(),
+      relatedOperations: {
+        parentOperationId: this.parentRelatedOperationId,
+        childOperationIds: cloneDeep(this.relatedOperations),
+      },
       duration: {
         totalTime: this.getTotalExecutionTime(),
         cacheWriteTime: this.getCacheWriteTime(),
@@ -217,10 +232,14 @@ export class QueryOperation extends BaseOperation {
         cacheDiffTime: this.getCacheDiffTime(),
         cacheBroadcastWatchesTime: this.getCacheBroadcastWatchesTime(),
       },
-      timing: this.timing,
+      timing: cloneDeep(this.timing),
       status: this.getOperationStatus(),
       cacheSnapshot: this.cacheSnapshot,
     };
+
+    this.isDirty = false;
+    this.computedOperation = operation;
+    return operation;
   }
 
   protected getOperationStatus() {
@@ -273,7 +292,7 @@ export class QueryOperation extends BaseOperation {
 
   private hasNetworkOnlyOperationSucceded() {
     return this.status.includes(
-      InternalOperationStatus.FailedToGetResultFromNetwork
+      InternalOperationStatus.ResultFromNetworkSucceded
     );
   }
 
@@ -310,7 +329,9 @@ export class QueryOperation extends BaseOperation {
   private doesOperationExist(opStage: OperationStage) {
     const result = this._operationStages.find((op) => op === opStage);
     if (result === undefined) {
-      // debugger;
+      if (this.debuggerEnabled) {
+        debugger;
+      }
       return false;
     }
 
