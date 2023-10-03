@@ -11,8 +11,7 @@
     "build:dev": "yarn build:parcel && node scripts/build.js --dev",
     "build:parcel": "parcel build",
     "prebuild": "rimraf dist",
-    "prebuild:dev": "yarn prebuild",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prebuild:dev": "yarn prebuild"
   },
   "keywords": [
     "inspector",

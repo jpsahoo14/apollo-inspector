@@ -31,6 +31,7 @@ export const overrideBroadcastQueries = (
           const affectedQueries = getAffectedQueries(apolloClient);
           operation.addAffectedQueries(affectedQueries);
         }
+        return operation;
       });
       if (rawData.broadcastQueriesOperationId) {
         rawData.currentOperationId = rawData.broadcastQueriesOperationId;

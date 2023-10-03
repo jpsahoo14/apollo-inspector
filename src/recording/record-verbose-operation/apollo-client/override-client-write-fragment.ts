@@ -25,7 +25,7 @@ export const overrideClientWriteFragment = (
 
   apolloClient.writeFragment = function override<
     TData,
-    TVariables = OperationVariables,
+    TVariables = OperationVariables
   >(...args: [DataProxy.WriteFragmentOptions<TData, TVariables>]) {
     const options = args[0];
     const {
@@ -56,6 +56,7 @@ export const overrideClientWriteFragment = (
       });
       writeFragmentOp.addResult(data);
       opMap.set(nextOperationId, writeFragmentOp);
+      return writeFragmentOp;
     });
 
     const previousOperationId = rawData.currentOperationId;
@@ -66,6 +67,7 @@ export const overrideClientWriteFragment = (
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(previousOperationId);
       addRelatedOperations(operation, nextOperationId);
+      return operation;
     });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
@@ -76,6 +78,7 @@ export const overrideClientWriteFragment = (
       if (operation) {
         operation.duration.operationExecutionEndTime = performance.now();
       }
+      return operation;
     });
 
     return result;

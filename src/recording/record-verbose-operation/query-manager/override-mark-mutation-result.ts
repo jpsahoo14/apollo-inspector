@@ -64,6 +64,7 @@ const isOperationRunningInOptimisticPhase = (
   setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
     const operation = opMap.get(operationId) as MutationOperation;
     isRunningInOptimisticPhase = operation.isRunningOptimisticPhase;
+    return operation;
   });
 
   return isRunningInOptimisticPhase;
@@ -108,6 +109,7 @@ const handleOperationExecutionInNonOptimisticPhase = async ({
           cleanUps
         );
     }
+    return operation;
   });
   return promise;
 };

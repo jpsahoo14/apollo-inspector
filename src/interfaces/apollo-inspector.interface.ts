@@ -45,7 +45,7 @@ export enum ResultsFrom {
   CACHE = "CACHE",
   NETWORK = "NETWORK",
   UNKNOWN = "UNKNOWN",
-  OPTIMISTIC_RESPONSE = "Optimistic Response",
+  OPTIMISTIC_RESPONSE = "Optimistic_Response",
 }
 
 export interface IDebugOperationDuration {
@@ -214,7 +214,7 @@ export interface IOperationResult {
 export const Not_Available = "Not Available";
 
 export interface IDataView {
-  operations: IOperation[] | null;
+  operations: IVerboseOperation[] | null;
   verboseOperations: IVerboseOperation[] | null;
   allOperations: IOperation[] | null;
   affectedQueriesOperations: IAffectedQueryMap | null;
@@ -266,11 +266,17 @@ export interface IInspectorTrackingConfig {
   };
   hooks?: IHook[];
   apolloClientIds: string[];
+  enableDebugger?: boolean;
+}
+
+export interface IInspectorObservableTrackingConfig
+  extends IInspectorTrackingConfig {
+  delayOperationsEmitByInMS?: number;
 }
 
 export interface IApolloClientObject {
   client: ApolloClient<NormalizedCacheObject>;
-  cliendId: string;
+  clientId: string;
 }
 
 export interface ITrackVerboseOperationsConfig {

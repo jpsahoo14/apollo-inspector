@@ -50,11 +50,13 @@ export const overrideCacheWriteQuery = (
       // add the operation to map
       operation.duration.operationExecutionEndTime = performance.now();
       opMap.set(nextOperationId, operation);
+      return operation;
     });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(previousOperationId);
       addRelatedOperations(operation, nextOperationId);
+      return operation;
     });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
@@ -62,10 +64,12 @@ export const overrideCacheWriteQuery = (
         const writeQueryOp = opMap.get(rawData.currentOperationId);
         const affectedQueries = getAffectedQueries(apolloClient);
         writeQueryOp?.addAffectedQueries(affectedQueries);
+        return writeQueryOp;
       } else {
         const writeQueryOp = opMap.get(nextOperationId);
         const affectedQueries = getAffectedQueries(apolloClient);
         writeQueryOp?.addAffectedQueries(affectedQueries);
+        return writeQueryOp;
       }
     });
 

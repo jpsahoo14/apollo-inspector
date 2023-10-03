@@ -42,6 +42,7 @@ export const overrideCacheBroadcastWatches = (
             cacheBroadcastWatchEndTime;
         }
         operation?.setOperationStage(OperationStage.cacheBroadcastWatches);
+        return operation;
       });
     }
 

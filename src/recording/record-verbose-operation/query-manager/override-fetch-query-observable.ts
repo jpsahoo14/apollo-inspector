@@ -60,15 +60,20 @@ export const overrideFetchQueryObservable = (
         ) {
           rawData.enableDebug &&
             console.log(
-              `APD operationId:${rawData.queryInfoToOperationId.get(queryInfo)
-                ?.id} currentOperationId:${nextOperationId} queryId:${queryId} `
+              `APD operationId:${
+                rawData.queryInfoToOperationId.get(queryInfo)?.id
+              } currentOperationId:${nextOperationId} queryId:${queryId} `
             );
           debugger;
         }
-        if (rawData.queryInfoToOperationId.has(queryInfo)) {
+        if (
+          rawData.queryInfoToOperationId.has(queryInfo) &&
+          rawData.enableDebug
+        ) {
           debugger;
         }
         rawData.queryInfoToOperationId.set(queryInfo, queryOp);
+        return queryOp;
       });
 
       const previousOperationId = rawData.currentOperationId;
@@ -93,6 +98,7 @@ export const overrideFetchQueryObservable = (
             op?.addResult(result.data);
             op?.addError(result.errors || result.error);
             rawData.broadcastQueriesOperationId = nextOperationId;
+            return op;
           });
         },
         error: (error: unknown) => {
@@ -104,6 +110,7 @@ export const overrideFetchQueryObservable = (
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             const op = opMap.get(nextOperationId);
             op?.addError(error);
+            return op;
           });
           subscription.unsubscribe();
         },
@@ -117,6 +124,7 @@ export const overrideFetchQueryObservable = (
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             const op = opMap.get(nextOperationId);
             op?.setInActive();
+            return op;
           });
         },
       });
@@ -132,6 +140,7 @@ export const overrideFetchQueryObservable = (
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             const op = opMap.get(nextOperationId);
             op && (op.duration.operationExecutionEndTime = performance.now());
+            return op;
           });
         })
         .catch(() => {
@@ -143,6 +152,7 @@ export const overrideFetchQueryObservable = (
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             const op = opMap.get(nextOperationId);
             op && (op.duration.operationExecutionEndTime = performance.now());
+            return op;
           });
         });
       return observable as unknown as Observable<unknown>;

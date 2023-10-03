@@ -73,10 +73,14 @@ export class SubscriptionOperation extends BaseOperation {
   }
 
   public getOperationInfo(): IVerboseOperation {
+    if (!this.isDirty && this.computedOperation) {
+      return this.computedOperation;
+    }
+
     const operationName = getOperationNameV2(this._query);
     const operationString = print(this._query);
 
-    return {
+    const operation = {
       id: this._id,
       operationType: this.getOperationType(),
       operationName,
@@ -86,7 +90,7 @@ export class SubscriptionOperation extends BaseOperation {
       result: cloneDeep(this._result),
       affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
-      error: this.error,
+      error: this.getError(),
       fetchPolicy: this.fetchPolicy,
       warning: undefined,
       relatedOperations: {
@@ -104,5 +108,9 @@ export class SubscriptionOperation extends BaseOperation {
       status: OperationStatus.Succeded,
       cacheSnapshot: this.cacheSnapshot,
     };
+
+    this.isDirty = false;
+    this.computedOperation = operation;
+    return operation;
   }
 }

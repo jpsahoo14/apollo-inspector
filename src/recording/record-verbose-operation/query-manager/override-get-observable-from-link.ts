@@ -89,6 +89,7 @@ export const overrideGetObservableFromLink = (
         op.deduplication = deduplication;
         op.piggyBackOnExistingObservable = piggyBackOnExistingObservable;
       }
+      return op;
     });
     const result: Observable<unknown> = originalGetObservableFromLink.apply(
       this,

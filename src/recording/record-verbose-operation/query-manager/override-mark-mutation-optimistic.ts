@@ -49,6 +49,7 @@ export const overrideMarkMutationOptimistic = (
             cleanUps
           );
       }
+      return operation;
     });
   };
 

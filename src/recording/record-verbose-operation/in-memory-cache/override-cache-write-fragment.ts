@@ -27,7 +27,7 @@ export const overrideCacheWriteFragment = (
 
   cache.writeFragment = function override<
     TData,
-    TVariables = OperationVariables,
+    TVariables = OperationVariables
   >(...args: [Cache.WriteFragmentOptions<TData, TVariables>]) {
     const options = args[0];
     const {
@@ -62,11 +62,13 @@ export const overrideCacheWriteFragment = (
       // add the operation to map
       writeFragmentOp.duration.operationExecutionEndTime = performance.now();
       opMap.set(nextOperationId, writeFragmentOp);
+      return writeFragmentOp;
     });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(previousOperationId);
       addRelatedOperations(operation, nextOperationId);
+      return operation;
     });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
@@ -74,10 +76,12 @@ export const overrideCacheWriteFragment = (
         const writeFragmentOp = opMap.get(rawData.currentOperationId);
         const affectedQueries = getAffectedQueries(apolloClient);
         writeFragmentOp?.addAffectedQueries(affectedQueries);
+        return writeFragmentOp;
       } else {
         const writeFragmentOp = opMap.get(nextOperationId);
         const affectedQueries = getAffectedQueries(apolloClient);
         writeFragmentOp?.addAffectedQueries(affectedQueries);
+        return writeFragmentOp;
       }
     });
 

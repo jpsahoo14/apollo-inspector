@@ -134,7 +134,9 @@ export class QueryOperation extends BaseOperation {
       }
     }
 
-    debugger;
+    if (this.debuggerEnabled) {
+      debugger;
+    }
     this._result.push({
       from: ResultsFrom.UNKNOWN,
       result: clonedResult,
@@ -199,10 +201,14 @@ export class QueryOperation extends BaseOperation {
   }
 
   public getOperationInfo(): IVerboseOperation {
+    if (!this.isDirty && this.computedOperation) {
+      return this.computedOperation;
+    }
+
     const operationName = getOperationNameV2(this._query);
     const operationString = print(this._query);
 
-    return {
+    const operation = {
       id: this._id,
       operationType: this.getOperationType(),
       operationName,
@@ -212,7 +218,7 @@ export class QueryOperation extends BaseOperation {
       result: cloneDeep(this._result),
       affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
-      error: this.error,
+      error: this.getError(),
       fetchPolicy: this.fetchPolicy,
       warning: this.getWarning(),
       relatedOperations: {
@@ -230,6 +236,10 @@ export class QueryOperation extends BaseOperation {
       status: this.getOperationStatus(),
       cacheSnapshot: this.cacheSnapshot,
     };
+
+    this.isDirty = false;
+    this.computedOperation = operation;
+    return operation;
   }
 
   protected getOperationStatus() {
@@ -319,7 +329,9 @@ export class QueryOperation extends BaseOperation {
   private doesOperationExist(opStage: OperationStage) {
     const result = this._operationStages.find((op) => op === opStage);
     if (result === undefined) {
-      // debugger;
+      if (this.debuggerEnabled) {
+        debugger;
+      }
       return false;
     }
 

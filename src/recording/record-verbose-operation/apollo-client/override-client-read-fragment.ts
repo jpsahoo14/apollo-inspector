@@ -25,7 +25,7 @@ export const overrideClientReadFragment = (
 
   apolloClient.readFragment = function override<
     T = any,
-    TVariables = OperationVariables,
+    TVariables = OperationVariables
   >(...args: [DataProxy.Fragment<TVariables, T>]) {
     const options = args[0];
     const { fragment, fragmentName, id, variables } = options;
@@ -48,6 +48,7 @@ export const overrideClientReadFragment = (
       });
 
       opMap.set(nextOperationId, readFragOp);
+      return readFragOp;
     });
 
     const previousOperationId = rawData.currentOperationId;
@@ -58,6 +59,7 @@ export const overrideClientReadFragment = (
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(previousOperationId);
       addRelatedOperations(operation, nextOperationId);
+      return operation;
     });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
@@ -66,6 +68,7 @@ export const overrideClientReadFragment = (
       if (operation) {
         operation.addResult(result);
         operation.duration.operationExecutionEndTime = performance.now();
+        return operation;
       }
     });
 

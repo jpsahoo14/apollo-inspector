@@ -10,6 +10,9 @@ import {
   ISetVerboseOperations,
   IDataView,
   IApolloClientObject,
+  IInspectorObservableTrackingConfig,
+  IVerboseOperation,
+  BaseOperation,
 } from "./interfaces";
 import {
   recordOnlyWriteToCacheOperations,
@@ -22,7 +25,37 @@ import { extractOperations } from "./extract-operations";
 import { throttle } from "lodash-es";
 
 export const initializeRawData = (
-  config: IInspectorTrackingConfig,
+  config: IInspectorTrackingConfig | IInspectorObservableTrackingConfig,
+  listeners?: Observer<IDataView>[]
+): IDataSetters => {
+  const rawData: IApolloInspectorState = {
+    operations: [],
+    verboseOperationsMap: new Map(),
+    allOperations: {},
+    mutationToMutationId: new Map(),
+    operationIdToApolloOpId: new Map(),
+    queryInfoToOperationId: new Map(),
+    currentOperationId: 0,
+    operationIdCounter: 0,
+    broadcastQueriesOperationId: 0,
+    enableDebug: false,
+    timer: new Timer().start(),
+    config,
+  };
+  (window as any).rawData = rawData;
+  const getRawData = () => rawData;
+
+  return {
+    getRawData,
+    setCacheOperations: getSetCacheOperations(getRawData()),
+    setAllOperations: getSetAllOperations(getRawData()),
+    setVerboseOperations: getSetVerboseOperations(getRawData(), () => {}),
+    getTimerInstance: () => getRawData().timer,
+  };
+};
+
+export const initializeRawDataObservableTracking = (
+  config: IInspectorObservableTrackingConfig,
   listeners?: Observer<IDataView>[]
 ): IDataSetters => {
   const rawData: IApolloInspectorState = {
@@ -45,7 +78,7 @@ export const initializeRawData = (
     listeners?.forEach((listener) => {
       listener.next(extractOperations(getRawData(), config));
     });
-  }, 50);
+  }, config.delayOperationsEmitByInMS || 0);
 
   return {
     getRawData,
@@ -58,7 +91,6 @@ export const initializeRawData = (
     getTimerInstance: () => getRawData().timer,
   };
 };
-
 const getSetCacheOperations = (
   rawData: IApolloInspectorState
 ): ISetCacheOperations => {
@@ -90,11 +122,14 @@ const getSetVerboseOperations = (
   pushDataToObservers: () => void
 ): ISetVerboseOperations => {
   return (
-    updateData: ((state: IVerboseOperationMap) => void) | IVerboseOperationMap
+    updateData: (
+      state: IVerboseOperationMap
+    ) => BaseOperation | null | undefined
   ) => {
     if (typeof updateData === "function") {
-      updateData(rawData.verboseOperationsMap);
+      const operation = updateData(rawData.verboseOperationsMap);
       pushDataToObservers();
+      operation?.markDirty();
       return;
     }
     rawData.verboseOperationsMap = updateData;

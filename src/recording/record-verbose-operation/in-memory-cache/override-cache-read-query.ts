@@ -49,11 +49,13 @@ export const overrideCacheReadQuery = (
       readQueryOp.duration.operationExecutionEndTime = performance.now();
       readQueryOp.addResult(result);
       opMap.set(nextOperationId, readQueryOp);
+      return readQueryOp;
     });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(previousOperationId);
       addRelatedOperations(operation, nextOperationId);
+      return operation;
     });
 
     return result;

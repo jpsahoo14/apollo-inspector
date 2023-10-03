@@ -35,6 +35,7 @@ export const addAffectedWatchQueriesAsRelatedOperations = (
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
             const operation = opMap.get(operationId);
             operation?.addRelatedOperation(nextOperationId);
+            return operation;
           });
 
           setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
@@ -50,6 +51,7 @@ export const addAffectedWatchQueriesAsRelatedOperations = (
             });
             queryOp.addResult(result);
             opMap.set(nextOperationId, queryOp);
+            return queryOp;
           });
 
           observableQuery.reportResult = originalReportResult;

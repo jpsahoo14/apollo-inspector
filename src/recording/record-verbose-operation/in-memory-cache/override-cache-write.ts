@@ -79,6 +79,7 @@ const addCacheTimeInformationToSubscriptionOperation = (
     const affectedQueries = getAffectedQueries(clientObj.client);
     operation.addAffectedQueries(affectedQueries);
     opMap.set(operationId, operation);
+    return operation;
   });
 };
 
@@ -108,5 +109,6 @@ const addCacheTimeInformationToOperation = (
       setCacheInOperation(operation, clientObj.client);
     }
     operation?.setOperationStage(OperationStage.addedDataToCache);
+    return operation;
   });
 };

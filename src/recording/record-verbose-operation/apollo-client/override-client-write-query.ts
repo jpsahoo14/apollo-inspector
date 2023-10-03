@@ -26,7 +26,7 @@ export const overrideClientWriteQuery = (
 
   apolloClient.writeQuery = function override<
     TData,
-    TVariables = OperationVariables,
+    TVariables = OperationVariables
   >(...args: [DataProxy.WriteQueryOptions<TData, TVariables>]) {
     const options = args[0];
     const { data, query, broadcast, id, overwrite, variables } = options;
@@ -49,6 +49,7 @@ export const overrideClientWriteQuery = (
       writeQueryOp.addResult(data);
 
       opMap.set(nextOperationId, writeQueryOp);
+      return writeQueryOp;
     });
 
     const previousOperationId = rawData.currentOperationId;
@@ -59,6 +60,7 @@ export const overrideClientWriteQuery = (
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(previousOperationId);
       addRelatedOperations(operation, nextOperationId);
+      return operation;
     });
 
     updateOperationEndExecutionTime(
@@ -84,5 +86,6 @@ const updateOperationEndExecutionTime = (
     if (operation) {
       operation.duration.operationExecutionEndTime = performance.now();
     }
+    return operation;
   });
 };

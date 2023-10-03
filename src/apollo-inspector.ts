@@ -4,12 +4,14 @@ import {
   IStopTracking,
   IDataView,
   IApolloClientObject,
+  IInspectorObservableTrackingConfig,
 } from "./interfaces";
 import { defaultConfig } from "./apollo-inspector-utils";
 import { extractOperations } from "./extract-operations";
 import {
   startRecordingInternal,
   initializeRawData,
+  initializeRawDataObservableTracking,
 } from "./apollo-inspector-helper";
 import { Observable, Observer } from "rxjs";
 
@@ -23,7 +25,7 @@ export class ApolloInspector {
   constructor(clients: IApolloClientObject[]) {
     this.clientsMap = new Map<string, IApolloClientObject>();
     clients.forEach((clientObj: IApolloClientObject) => {
-      this.clientsMap.set(clientObj.cliendId, clientObj);
+      this.clientsMap.set(clientObj.clientId, clientObj);
     });
   }
 
@@ -61,14 +63,14 @@ export class ApolloInspector {
   }
 
   public startTrackingSubscription(
-    config: IInspectorTrackingConfig = defaultConfig
+    config: IInspectorObservableTrackingConfig = defaultConfig
   ): Observable<IDataView> {
     this.validateApolloClientIds(config.apolloClientIds);
 
     const observable = new Observable<IDataView>((observer) => {
       if (!this.isRecording) {
         this.setRecording(true);
-        const dataSetters: IDataSetters = initializeRawData(
+        const dataSetters: IDataSetters = initializeRawDataObservableTracking(
           config,
           this.listeners
         );
@@ -116,17 +118,17 @@ export class ApolloInspector {
   }
 
   private validateApolloClientIds(apolloClientIds: string[]) {
-    let shouldThrow = false;
+    let invalidClientId = null;
     apolloClientIds.every((id) => {
       if (!this.clientsMap.has(id)) {
-        shouldThrow = true;
+        invalidClientId = id;
         return false;
       }
       return true;
     });
 
-    if (shouldThrow) {
-      throw new Error("Invalid clientId");
+    if (invalidClientId !== null) {
+      throw new Error(`Invalid clientId: ${invalidClientId}`);
     }
   }
 }

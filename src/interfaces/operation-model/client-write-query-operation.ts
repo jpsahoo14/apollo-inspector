@@ -65,10 +65,14 @@ export class ClientWriteQueryOperation extends BaseOperation {
   }
 
   public getOperationInfo(): IVerboseOperation {
+    if (!this.isDirty && this.computedOperation) {
+      return this.computedOperation;
+    }
+
     const operationName = getOperationNameV2(this._query);
     const operationString = print(this._query);
 
-    return {
+    const operation = {
       id: this._id,
       operationType: this.getOperationType(),
       operationName,
@@ -78,7 +82,7 @@ export class ClientWriteQueryOperation extends BaseOperation {
       result: cloneDeep(this._result),
       affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
-      error: this.error,
+      error: this.getError(),
       fetchPolicy: undefined,
       relatedOperations: {
         parentOperationId: this.parentRelatedOperationId,
@@ -96,6 +100,10 @@ export class ClientWriteQueryOperation extends BaseOperation {
       status: this.getOperationStatus(),
       cacheSnapshot: this.cacheSnapshot,
     };
+
+    this.isDirty = false;
+    this.computedOperation = operation;
+    return operation;
   }
 
   public setOperationStage(opStage: OperationStage) {

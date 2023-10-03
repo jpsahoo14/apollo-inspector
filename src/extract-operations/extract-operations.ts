@@ -21,7 +21,6 @@ export const extractOperations = (
     verboseOperations: null,
   };
 
-  result.operations = extractCacheOperations(rawData.operations);
   result.allOperations = extractAllOperationsData(rawData.allOperations);
   result.verboseOperations = extractVerboseOperationsData(
     rawData.verboseOperationsMap,
@@ -50,6 +49,5 @@ export const extractOperations = (
   result.affectedQueriesOperations = extractAffectedQueriesData(
     rawData.verboseOperationsMap
   );
-  console.log({ rawData, result });
   return result;
 };

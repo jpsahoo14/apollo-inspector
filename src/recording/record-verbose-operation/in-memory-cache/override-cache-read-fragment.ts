@@ -59,11 +59,13 @@ export const overrideCacheReadFragment = (
       readFragOp.duration.operationExecutionEndTime = performance.now();
       readFragOp.addResult(result);
       opMap.set(nextOperationId, readFragOp);
+      return readFragOp;
     });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(previousOperationId);
       addRelatedOperations(operation, nextOperationId);
+      return operation;
     });
 
     return result;

@@ -49,6 +49,7 @@ export const overrideFetchQueryByPolicy = (
           op.fetchPolicy = fetchPolicy;
           op.diff = diff;
         }
+        return op;
       });
       return result;
     };

@@ -58,6 +58,7 @@ export const overrideMutate = (
         ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
       });
       opMap.set(operationId, mutateOperation);
+      return mutateOperation;
     });
 
     try {
@@ -73,6 +74,7 @@ export const overrideMutate = (
         op && op.addError(result.errors);
 
         op && (op.duration.operationExecutionEndTime = performance.now());
+        return op;
       });
       return result;
     } catch (error) {
@@ -80,6 +82,7 @@ export const overrideMutate = (
         const op = opMap.get(operationId) as MutationOperation;
         op && op.addError(error);
         op && (op.duration.operationExecutionEndTime = performance.now());
+        return op;
       });
 
       throw error;

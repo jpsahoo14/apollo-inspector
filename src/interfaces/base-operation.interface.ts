@@ -19,4 +19,5 @@ export interface IBaseOperation {
   setCacheSnapshot(cache: unknown): void;
   getOperationName(): string;
   addRelatedOperation(operationId: number): void;
+  markDirty(): void;
 }

@@ -19,7 +19,7 @@ export const getBaseOperationConstructorExtraParams = (
 > => {
   const { rawData } = params;
   return {
-    clientId: clientObj.cliendId,
+    clientId: clientObj.clientId,
     parentRelatedOperationId: rawData.currentOperationId,
     timer: new RestrictedTimer(rawData.timer),
     cacheSnapshotConfig:

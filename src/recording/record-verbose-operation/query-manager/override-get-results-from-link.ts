@@ -38,6 +38,7 @@ export const overrideGetResultsFromLink = (
             const operation = opMap.get(operationId);
             const affectedQueries = getAffectedQueries(apolloClient);
             operation?.addAffectedQueries(affectedQueries);
+            return operation;
           });
         },
         error: () => {

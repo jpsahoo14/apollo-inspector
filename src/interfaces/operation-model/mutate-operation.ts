@@ -116,10 +116,13 @@ export class MutationOperation extends BaseOperation {
   }
 
   public getOperationInfo(): IVerboseOperation {
+    if (!this.isDirty && this.computedOperation) {
+      return this.computedOperation;
+    }
     const operationName = getOperationNameV2(this._query);
     const operationString = print(this._query);
 
-    return {
+    const operation = {
       id: this._id,
       operationType: this.getOperationType(),
       operationName,
@@ -132,7 +135,7 @@ export class MutationOperation extends BaseOperation {
         this.affectedWatchQueriesDueToOptimisticResponse
       ),
       isActive: this.active,
-      error: this.error,
+      error: this.getError(),
       fetchPolicy: this.fetchPolicy,
       warning: undefined,
       relatedOperations: {
@@ -150,6 +153,10 @@ export class MutationOperation extends BaseOperation {
       status: this.getOperationStatus(),
       cacheSnapshot: cloneDeep(this.cacheSnapshot),
     };
+
+    this.isDirty = false;
+    this.computedOperation = operation;
+    return operation;
   }
 
   public setOperationStage(opStage: OperationStage) {

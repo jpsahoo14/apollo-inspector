@@ -43,6 +43,7 @@ export const defaultConfig: IInspectorTrackingConfig = {
   tracking: { trackVerboseOperations: true },
   hooks: [],
   apolloClientIds: [],
+  enableDebugger: false,
 };
 
 export const resumeOperation = (

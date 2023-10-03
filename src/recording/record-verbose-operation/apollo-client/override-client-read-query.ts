@@ -25,7 +25,7 @@ export const overrideClientReadQuery = (
 
   apolloClient.readQuery = function override<
     T = any,
-    TVariables = OperationVariables,
+    TVariables = OperationVariables
   >(...args: [DataProxy.Query<TVariables, T>]) {
     const options = args[0];
     const { query, id, variables } = options;
@@ -46,6 +46,7 @@ export const overrideClientReadQuery = (
         ...getBaseOperationConstructorExtraParams({ rawData }, clientObj),
       });
       opMap.set(nextOperationId, readQueryOp);
+      return readQueryOp;
     });
 
     const previousOperationId = rawData.currentOperationId;
@@ -56,6 +57,7 @@ export const overrideClientReadQuery = (
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const operation = opMap.get(previousOperationId);
       addRelatedOperations(operation, nextOperationId);
+      return operation;
     });
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
@@ -64,6 +66,7 @@ export const overrideClientReadQuery = (
         operation.addResult(result);
         operation.duration.operationExecutionEndTime = performance.now();
       }
+      return operation;
     });
 
     return result;

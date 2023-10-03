@@ -39,6 +39,7 @@ export const overrideCacheDiff = (
           operation.duration.cacheDiffEnd = cacheDiffEndTime;
           operation?.setOperationStage(OperationStage.cacheDiff);
         }
+        return operation;
       });
     }
 
