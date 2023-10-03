@@ -1,6 +1,6 @@
 {
   "name": "apollo-inspector",
-  "version": "1.17.0",
+  "version": "1.17.1",
   "description": "Tool to track apollo client operations",
   "main": "dist/main.js",
   "source": "index.ts",
@@ -19,6 +19,10 @@
     "apollo inspector"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jpsahoo14/apollo-inspector.git"
+  },
   "devDependencies": {
     "@apollo/client": "3.6.5",
     "@parcel/packager-ts": "^2.8.2",
