@@ -235,6 +235,7 @@ export class QueryOperation extends BaseOperation {
       timing: cloneDeep(this.timing),
       status: this.getOperationStatus(),
       cacheSnapshot: this.cacheSnapshot,
+      changeSetVersion: this.computeChangeSetVersion(),
     };
 
     this.isDirty = false;
