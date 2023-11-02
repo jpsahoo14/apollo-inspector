@@ -107,6 +107,7 @@ export class SubscriptionOperation extends BaseOperation {
       timing: cloneDeep(this.timing),
       status: OperationStatus.Succeded,
       cacheSnapshot: this.cacheSnapshot,
+      changeSetVersion: this.computeChangeSetVersion(),
     };
 
     this.isDirty = false;

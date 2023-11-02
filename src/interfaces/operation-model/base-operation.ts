@@ -53,6 +53,7 @@ export class BaseOperation implements IBaseOperation {
   protected relatedOperations: number[];
   protected parentRelatedOperationId: number = 0;
   protected clientId: string;
+  protected changeSetVersion: number;
   public duration: IDebugOperationDuration;
   public serverQuery: DocumentNode | undefined;
   public clientQuery: DocumentNode | undefined;
@@ -94,6 +95,7 @@ export class BaseOperation implements IBaseOperation {
     this.cacheSnapShotConfig = cacheSnapshotConfig || null;
     this.errorPolicy = errorPolicy;
     this.relatedOperations = [];
+    this.changeSetVersion = 0;
     this.parentRelatedOperationId = parentRelatedOperationId;
     const val = false;
     if (val) {
@@ -224,6 +226,7 @@ export class BaseOperation implements IBaseOperation {
       timing: undefined,
       status: this.getOperationStatus(),
       cacheSnapshot: this.cacheSnapshot,
+      changeSetVersion: this.computeChangeSetVersion(),
     };
 
     this.isDirty = false;
@@ -313,5 +316,10 @@ export class BaseOperation implements IBaseOperation {
       }
       return null;
     } catch {}
+  }
+
+  protected computeChangeSetVersion() {
+    this.changeSetVersion = this.changeSetVersion + 1;
+    return this.changeSetVersion;
   }
 }

@@ -152,6 +152,7 @@ export class MutationOperation extends BaseOperation {
       timing: cloneDeep(this.timing),
       status: this.getOperationStatus(),
       cacheSnapshot: cloneDeep(this.cacheSnapshot),
+      changeSetVersion: this.computeChangeSetVersion(),
     };
 
     this.isDirty = false;

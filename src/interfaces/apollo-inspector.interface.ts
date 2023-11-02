@@ -177,6 +177,7 @@ export interface IVerboseOperation {
   timing: ITiming | undefined; // Time information relative to start recording at 0 seconds
   variables: OperationVariables | undefined;
   warning: unknown[] | undefined; // apollo client internal warning while reading data from cache
+  changeSetVersion: number;
 }
 
 export interface IRelatedOperation {
