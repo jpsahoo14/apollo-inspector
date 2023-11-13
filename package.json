@@ -1,6 +1,6 @@
 {
   "name": "apollo-inspector",
-  "version": "1.17.1",
+  "version": "1.17.4",
   "description": "Tool to track apollo client operations",
   "main": "dist/main.js",
   "source": "index.ts",
