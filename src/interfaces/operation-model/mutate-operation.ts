@@ -115,7 +115,7 @@ export class MutationOperation extends BaseOperation {
     this.addStatus(InternalOperationStatus.ResultFromNetworkSucceded);
   }
 
-  public getOperationInfo(): IVerboseOperation {
+  public getOperationInfo(): Readonly<IVerboseOperation> {
     if (!this.isDirty && this.computedOperation) {
       return this.computedOperation;
     }
@@ -128,12 +128,11 @@ export class MutationOperation extends BaseOperation {
       operationName,
       operationString,
       clientId: this.clientId,
-      variables: cloneDeep(this._variables),
-      result: cloneDeep(this._result),
-      affectedQueries: cloneDeep(this._affectedQueries),
-      affectedQueriesDueToOptimisticResponse: cloneDeep(
-        this.affectedWatchQueriesDueToOptimisticResponse
-      ),
+      variables: this._variables,
+      result: this._result,
+      affectedQueries: this._affectedQueries,
+      affectedQueriesDueToOptimisticResponse:
+        this.affectedWatchQueriesDueToOptimisticResponse,
       isActive: this.active,
       error: this.getError(),
       fetchPolicy: this.fetchPolicy,
@@ -171,8 +170,9 @@ export class MutationOperation extends BaseOperation {
   public addAffectedQueriesDueToOptimisticResponse(
     queries: DocumentNode[]
   ): void {
+    const clonedQueries = cloneDeep(queries);
     this.affectedWatchQueriesDueToOptimisticResponse =
-      this.affectedWatchQueriesDueToOptimisticResponse.concat(queries);
+      this.affectedWatchQueriesDueToOptimisticResponse.concat(clonedQueries);
   }
 
   public addOperationsCalledFromUpdateCallback(operationId: number) {
