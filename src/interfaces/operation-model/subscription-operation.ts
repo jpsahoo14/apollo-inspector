@@ -72,7 +72,7 @@ export class SubscriptionOperation extends BaseOperation {
     });
   }
 
-  public getOperationInfo(): IVerboseOperation {
+  public getOperationInfo(): Readonly<IVerboseOperation> {
     if (!this.isDirty && this.computedOperation) {
       return this.computedOperation;
     }
@@ -87,8 +87,8 @@ export class SubscriptionOperation extends BaseOperation {
       operationString,
       clientId: this.clientId,
       variables: this._variables,
-      result: cloneDeep(this._result),
-      affectedQueries: cloneDeep(this._affectedQueries),
+      result: this._result,
+      affectedQueries: this._affectedQueries,
       isActive: this.active,
       error: this.getError(),
       fetchPolicy: this.fetchPolicy,

@@ -155,7 +155,8 @@ export class BaseOperation implements IBaseOperation {
   }
 
   public addAffectedQueries(queries: DocumentNode[]) {
-    this._affectedQueries = this._affectedQueries.concat(queries);
+    const clonedQueries = cloneDeep(queries);
+    this._affectedQueries = this._affectedQueries.concat(clonedQueries);
   }
 
   public getTotalExecutionTime = () => {
@@ -198,7 +199,7 @@ export class BaseOperation implements IBaseOperation {
     return this.duration.totalCacheWriteTime || NaN;
   };
 
-  public getOperationInfo(): IVerboseOperation {
+  public getOperationInfo(): Readonly<IVerboseOperation> {
     if (!this.isDirty && this.computedOperation) {
       return this.computedOperation;
     }
@@ -211,9 +212,9 @@ export class BaseOperation implements IBaseOperation {
       operationName,
       clientId: this.clientId,
       operationString,
-      variables: cloneDeep(this._variables),
-      result: cloneDeep(this._result),
-      affectedQueries: cloneDeep(this._affectedQueries),
+      variables: this._variables,
+      result: this._result,
+      affectedQueries: this._affectedQueries,
       isActive: this.active,
       error: this.getError(),
       fetchPolicy: undefined,

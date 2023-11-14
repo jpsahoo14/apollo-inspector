@@ -200,7 +200,7 @@ export class QueryOperation extends BaseOperation {
     this._operationStages.push(opStage);
   }
 
-  public getOperationInfo(): IVerboseOperation {
+  public getOperationInfo(): Readonly<IVerboseOperation> {
     if (!this.isDirty && this.computedOperation) {
       return this.computedOperation;
     }
@@ -214,9 +214,9 @@ export class QueryOperation extends BaseOperation {
       operationName,
       operationString,
       clientId: this.clientId,
-      variables: cloneDeep(this._variables),
-      result: cloneDeep(this._result),
-      affectedQueries: cloneDeep(this._affectedQueries),
+      variables: this._variables,
+      result: this._result,
+      affectedQueries: this._affectedQueries,
       isActive: this.active,
       error: this.getError(),
       fetchPolicy: this.fetchPolicy,

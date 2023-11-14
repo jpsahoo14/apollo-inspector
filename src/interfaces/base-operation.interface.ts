@@ -10,7 +10,7 @@ export interface IBaseOperation {
   addError(error: unknown): void;
   setInActive(): void;
   addAffectedQueries(queries: DocumentNode[]): void;
-  getOperationInfo(): IVerboseOperation;
+  getOperationInfo(): Readonly<IVerboseOperation>;
   getTotalExecutionTime(): number;
   getOperationType(): OperationType;
   getCacheWriteTime(): number;
