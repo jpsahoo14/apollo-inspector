@@ -128,9 +128,9 @@ export class MutationOperation extends BaseOperation {
       operationName,
       operationString,
       clientId: this.clientId,
-      variables: this._variables,
-      result: this._result,
-      affectedQueries: this._affectedQueries,
+      variables: cloneDeep(this._variables),
+      result: cloneDeep(this._result),
+      affectedQueries: cloneDeep(this._affectedQueries),
       affectedQueriesDueToOptimisticResponse:
         this.affectedWatchQueriesDueToOptimisticResponse,
       isActive: this.active,

@@ -155,8 +155,7 @@ export class BaseOperation implements IBaseOperation {
   }
 
   public addAffectedQueries(queries: DocumentNode[]) {
-    const clonedQueries = cloneDeep(queries);
-    this._affectedQueries = this._affectedQueries.concat(clonedQueries);
+    this._affectedQueries = this._affectedQueries.concat(queries);
   }
 
   public getTotalExecutionTime = () => {
@@ -212,9 +211,9 @@ export class BaseOperation implements IBaseOperation {
       operationName,
       clientId: this.clientId,
       operationString,
-      variables: this._variables,
-      result: this._result,
-      affectedQueries: this._affectedQueries,
+      variables: cloneDeep(this._variables),
+      result: cloneDeep(this._result),
+      affectedQueries: cloneDeep(this._affectedQueries),
       isActive: this.active,
       error: this.getError(),
       fetchPolicy: undefined,
