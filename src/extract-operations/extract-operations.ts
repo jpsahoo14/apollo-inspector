@@ -13,7 +13,7 @@ import { extractAffectedQueriesData } from "./extract-affected-queries-data";
 export const extractOperations = (
   rawData: IApolloInspectorState,
   config: IInspectorTrackingConfig
-) => {
+): IDataView => {
   const result: IDataView = {
     affectedQueriesOperations: null,
     allOperations: null,
