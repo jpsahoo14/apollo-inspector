@@ -1,12 +1,10 @@
 import { BaseOperation, IBaseOperationConstructor } from "./base-operation";
 import {
-  FetchPolicy,
   OperationVariables,
   MutationQueryReducersMap,
   InternalRefetchQueriesInclude,
   FetchResult,
   OnQueryUpdated,
-  ErrorPolicy,
 } from "@apollo/client";
 import {
   OperationStage,

@@ -11,7 +11,6 @@ import {
   IDataView,
   IApolloClientObject,
   IInspectorObservableTrackingConfig,
-  IVerboseOperation,
   BaseOperation,
 } from "./interfaces";
 import {

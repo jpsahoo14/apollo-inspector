@@ -26,9 +26,9 @@ export const getOperationName = (query: DocumentNode) => {
 export const getOperationNameV2 = (doc: DocumentNode) => {
   const node = getOperationAST(doc);
 
-  if (!node) {
+  /* if (!node) {
     console.log(`no name for query ${doc}`);
-  }
+  } */
 
   return node?.name?.value || NameNotFound;
 };

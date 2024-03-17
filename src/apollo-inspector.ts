@@ -29,6 +29,12 @@ export class ApolloInspector {
     });
   }
 
+  /**
+   * Returns a function, upon calling this function it returns all the
+   * operations executed within the time frame
+   * @param config
+   * @returns
+   */
   public startTracking(
     config: IInspectorTrackingConfig = defaultConfig
   ): IStopTracking {
@@ -62,6 +68,12 @@ export class ApolloInspector {
     };
   }
 
+  /**
+   * Returns an observable, to which one can subscribe and listen to
+   * ongoing operations in real-time
+   * @param config
+   * @returns
+   */
   public startTrackingSubscription(
     config: IInspectorObservableTrackingConfig = defaultConfig
   ): Observable<IDataView> {
