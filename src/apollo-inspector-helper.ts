@@ -20,27 +20,14 @@ import {
 } from "./recording";
 import { Timer } from "timer-node";
 import { Observer } from "rxjs";
-import { extractOperations } from "./extract-operations";
+import { extractOperations, extracDirtyOperations } from "./extract-operations";
 import { throttle } from "lodash-es";
 
 export const initializeRawData = (
   config: IInspectorTrackingConfig | IInspectorObservableTrackingConfig,
   listeners?: Observer<IDataView>[]
 ): IDataSetters => {
-  const rawData: IApolloInspectorState = {
-    operations: [],
-    verboseOperationsMap: new Map(),
-    allOperations: {},
-    mutationToMutationId: new Map(),
-    operationIdToApolloOpId: new Map(),
-    queryInfoToOperationId: new Map(),
-    currentOperationId: 0,
-    operationIdCounter: 0,
-    broadcastQueriesOperationId: 0,
-    enableDebug: false,
-    timer: new Timer().start(),
-    config,
-  };
+  const rawData: IApolloInspectorState = initializeApolloInspectorState(config);
   (window as any).rawData = rawData;
   const getRawData = () => rawData;
 
@@ -53,24 +40,12 @@ export const initializeRawData = (
   };
 };
 
-export const initializeRawDataObservableTracking = (
+export const initializeRawDataAllOperationsObservableTracking = (
   config: IInspectorObservableTrackingConfig,
   listeners?: Observer<IDataView>[]
 ): IDataSetters => {
-  const rawData: IApolloInspectorState = {
-    operations: [],
-    verboseOperationsMap: new Map(),
-    allOperations: {},
-    mutationToMutationId: new Map(),
-    operationIdToApolloOpId: new Map(),
-    queryInfoToOperationId: new Map(),
-    currentOperationId: 0,
-    operationIdCounter: 0,
-    broadcastQueriesOperationId: 0,
-    enableDebug: false,
-    timer: new Timer().start(),
-    config,
-  };
+  const rawData: IApolloInspectorState = initializeApolloInspectorState(config);
+
   (window as any).rawData = rawData;
   const getRawData = () => rawData;
   const pushDataToObservers: () => void = throttle(() => {
@@ -90,6 +65,36 @@ export const initializeRawDataObservableTracking = (
     getTimerInstance: () => getRawData().timer,
   };
 };
+
+export const initializeRawDataObservableTracking = (
+  config: IInspectorObservableTrackingConfig,
+  listeners?: Observer<IDataView>[]
+): IDataSetters => {
+  const rawData: IApolloInspectorState = initializeApolloInspectorState(config);
+
+  (window as any).rawData = rawData;
+  const getRawData = () => rawData;
+  const intervalNum = setInterval(() => {
+    listeners?.forEach((listener) => {
+      listener.next(extracDirtyOperations(getRawData(), config));
+    });
+  }, config.delayOperationsEmitByInMS || 1000);
+
+  const cleanUps = [];
+  cleanUps.push(() => {
+    clearInterval(intervalNum);
+  });
+
+  return {
+    getRawData,
+    setCacheOperations: getSetCacheOperations(getRawData()),
+    setAllOperations: getSetAllOperations(getRawData()),
+    setVerboseOperations: getSetVerboseOperations(getRawData(), () => {}),
+    getTimerInstance: () => getRawData().timer,
+    cleanUps,
+  };
+};
+
 const getSetCacheOperations = (
   rawData: IApolloInspectorState
 ): ISetCacheOperations => {
@@ -172,3 +177,20 @@ export const startRecordingInternal = ({
 
   return cleanups;
 };
+
+const initializeApolloInspectorState = (
+  config: IInspectorTrackingConfig | IInspectorObservableTrackingConfig
+) => ({
+  operations: [],
+  verboseOperationsMap: new Map(),
+  allOperations: {},
+  mutationToMutationId: new Map(),
+  operationIdToApolloOpId: new Map(),
+  queryInfoToOperationId: new Map(),
+  currentOperationId: 0,
+  operationIdCounter: 0,
+  broadcastQueriesOperationId: 0,
+  enableDebug: false,
+  timer: new Timer().start(),
+  config,
+});
