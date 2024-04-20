@@ -70,7 +70,7 @@ export class ClientWriteFragmentOperation extends BaseOperation {
   }
 
   public getOperationInfo(): Readonly<IVerboseOperation> {
-    if (!this.isDirty && this.computedOperation) {
+    if (!this._isDirty && this.computedOperation) {
       return this.computedOperation;
     }
     const operationName = this.getOperationName();
@@ -107,7 +107,7 @@ export class ClientWriteFragmentOperation extends BaseOperation {
       changeSetVersion: this.computeChangeSetVersion(),
     };
 
-    this.isDirty = false;
+    this._isDirty = false;
     this.computedOperation = operation;
     return operation;
   }

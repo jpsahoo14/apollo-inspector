@@ -12,6 +12,7 @@ export interface IDataSetters {
   setAllOperations: ISetAllOperations;
   setVerboseOperations: ISetVerboseOperations;
   getTimerInstance: () => Timer;
+  cleanUps?: (() => void)[];
 }
 
 export type ISetCacheOperations = (

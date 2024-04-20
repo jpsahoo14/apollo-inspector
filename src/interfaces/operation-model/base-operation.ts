@@ -40,7 +40,7 @@ export class BaseOperation implements IBaseOperation {
   protected active: boolean;
   protected _id: number;
   protected decimalNumber = 2;
-  protected isDirty: boolean;
+  protected _isDirty: boolean;
   protected computedOperation: IVerboseOperation | null;
   protected debuggerEnabled: boolean;
   protected errorPolicy: ErrorPolicy | undefined;
@@ -89,7 +89,7 @@ export class BaseOperation implements IBaseOperation {
     this.serverQuery = undefined;
     this.clientQuery = undefined;
 
-    this.isDirty = true;
+    this._isDirty = true;
     this.computedOperation = null;
     this.debuggerEnabled = debuggerEnabled;
     this.cacheSnapShotConfig = cacheSnapshotConfig || null;
@@ -199,7 +199,7 @@ export class BaseOperation implements IBaseOperation {
   };
 
   public getOperationInfo(): Readonly<IVerboseOperation> {
-    if (!this.isDirty && this.computedOperation) {
+    if (!this._isDirty && this.computedOperation) {
       return this.computedOperation;
     }
     const operationName = getOperationNameV2(this._query);
@@ -229,7 +229,7 @@ export class BaseOperation implements IBaseOperation {
       changeSetVersion: this.computeChangeSetVersion(),
     };
 
-    this.isDirty = false;
+    this._isDirty = false;
     this.computedOperation = operation;
     return operation;
   }
@@ -283,7 +283,7 @@ export class BaseOperation implements IBaseOperation {
   }
 
   public markDirty(): void {
-    this.isDirty = true;
+    this._isDirty = true;
   }
 
   public setCacheSnapshot(cache: unknown) {
@@ -299,6 +299,10 @@ export class BaseOperation implements IBaseOperation {
       const endTime = performance.now();
       console.log({ cloneDeepTime: `${endTime - startTime}` });
     }
+  }
+
+  public get isDirty() {
+    return this._isDirty;
   }
 
   public getOperationName(): string {

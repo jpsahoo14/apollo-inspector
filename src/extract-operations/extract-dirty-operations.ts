@@ -7,10 +7,10 @@ import {
 } from "../interfaces";
 import { extractCacheOperations } from "./extract-cache-operations";
 import { extractAllOperationsData } from "./extract-all-operations";
-import { extractVerboseOperationsData } from "./extract-verbose-operations";
+import { extractDirtyVerboseOperationsData } from "./extract-dirty-verbose-operations";
 import { extractAffectedQueriesData } from "./extract-affected-queries-data";
 
-export const extractOperations = (
+export const extracDirtyOperations = (
   rawData: IApolloInspectorState,
   config: IInspectorTrackingConfig
 ): IDataView => {
@@ -22,11 +22,10 @@ export const extractOperations = (
   };
 
   result.allOperations = extractAllOperationsData(rawData.allOperations);
-  result.verboseOperations = extractVerboseOperationsData(
+  result.verboseOperations = extractDirtyVerboseOperationsData(
     rawData.verboseOperationsMap,
     config
   );
-
   // return operations withour related operations
   result.operations = result.verboseOperations.filter(
     (operation: IVerboseOperation) => {
@@ -48,6 +47,7 @@ export const extractOperations = (
       }
     }
   );
+
   result.affectedQueriesOperations = extractAffectedQueriesData(
     rawData.verboseOperationsMap
   );
