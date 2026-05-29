@@ -4,12 +4,12 @@ import {
   ICachedQueryInfo,
   IApolloInspectorState,
   OperationStage,
-  IApolloClient,
   IQueryInfo,
   QueryOperation,
   IApolloClientObject,
 } from "../../../interfaces";
 import { getAffectedQueries } from "../../../apollo-inspector-utils";
+import { getApolloQueryManager } from "../../../apollo-client-internals";
 
 export const overrideQueryInfoMarkResult = (
   clientObj: IApolloClientObject,
@@ -33,9 +33,8 @@ const overrideForExistingQueries = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
   rawData: IApolloInspectorState
 ) => {
-  const existingWatchQueriesMap: Map<string, IQueryInfo> = (
-    apolloClient as unknown as IApolloClient
-  ).queryManager.queries;
+  const existingWatchQueriesMap: Map<string, IQueryInfo> =
+    getApolloQueryManager(apolloClient).queries;
   const cachedOriginalFns = new Map<string, ICachedQueryInfo>();
 
   for (const [key, value] of existingWatchQueriesMap) {
@@ -83,8 +82,8 @@ const overrideForNewQueries = (
   apolloClient: ApolloClient<NormalizedCacheObject>,
   rawData: IApolloInspectorState
 ) => {
-  const originalWatchQueriesMap = (apolloClient as unknown as IApolloClient)
-    .queryManager.queries;
+  const queryManager = getApolloQueryManager(apolloClient);
+  const originalWatchQueriesMap = queryManager.queries;
   const cachedOriginalFns = new Map<string, ICachedQueryInfo>();
 
   const handler = {
@@ -145,11 +144,10 @@ const overrideForNewQueries = (
   };
 
   const proxy = new Proxy(originalWatchQueriesMap, handler);
-  (apolloClient as unknown as IApolloClient).queryManager.queries = proxy;
+  queryManager.queries = proxy;
 
   return () => {
-    (apolloClient as unknown as IApolloClient).queryManager.queries =
-      originalWatchQueriesMap;
+    queryManager.queries = originalWatchQueriesMap;
     for (const [_key, value] of cachedOriginalFns) {
       const { queryInfo, originalMarkResult } = value;
       queryInfo.markResult = originalMarkResult;
