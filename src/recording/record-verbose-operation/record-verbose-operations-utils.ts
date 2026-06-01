@@ -1,14 +1,16 @@
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
-  IApolloClient,
   IVerboseOperationMap,
   IObservableQueryReportResult,
   QueryOperation,
   getBaseOperationConstructorExtraParams,
   IApolloClientObject,
 } from "../../interfaces";
-import { shouldNotifyQueryInfo } from "../../apollo-client-internals";
+import {
+  getApolloQueryManager,
+  shouldNotifyQueryInfo,
+} from "../../apollo-client-internals";
 
 export const addAffectedWatchQueriesAsRelatedOperations = (
   clientObj: IApolloClientObject,
@@ -17,8 +19,7 @@ export const addAffectedWatchQueriesAsRelatedOperations = (
   operationId: number,
   cleanUps: (() => void)[]
 ) => {
-  const watchQueries = (clientObj.client as unknown as IApolloClient)
-    .queryManager.queries;
+  const watchQueries = getApolloQueryManager(clientObj.client).queries;
 
   for (const [_key, value] of watchQueries) {
     const document = value.document;

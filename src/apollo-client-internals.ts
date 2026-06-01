@@ -14,6 +14,7 @@ import type {
   CacheWriteBehavior,
   QueryInfo,
 } from "@apollo/client/core/QueryInfo";
+import { canonicalStringify } from "@apollo/client/utilities";
 import { print } from "graphql";
 import type { DocumentNode } from "graphql";
 
@@ -200,7 +201,7 @@ export const hasInFlightLinkObservable = (
   if (typeof inFlightLinkObservables.peek === "function") {
     const entry = inFlightLinkObservables.peek(
       print(serverQuery),
-      JSON.stringify(variables),
+      canonicalStringify(variables),
     );
     return !!entry?.observable;
   }
