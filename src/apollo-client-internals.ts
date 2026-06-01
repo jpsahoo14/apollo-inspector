@@ -14,7 +14,6 @@ import type {
   CacheWriteBehavior,
   QueryInfo,
 } from "@apollo/client/core/QueryInfo";
-import { canonicalStringify } from "@apollo/client/utilities";
 import { print } from "graphql";
 import type { DocumentNode } from "graphql";
 
@@ -208,6 +207,23 @@ export const hasInFlightLinkObservable = (
 
   return false;
 };
+
+// Mirrors Apollo's `canonicalStringify`: serializes with object keys sorted so
+// that variable objects with the same entries in a different order produce the
+// same in-flight cache key. Implemented locally to avoid an extra dependency on
+// Apollo internals and the associated bundle-size cost.
+const canonicalStringify = (value: unknown) =>
+  JSON.stringify(value, (_key, val) => {
+    if (val && typeof val === "object" && !Array.isArray(val)) {
+      return Object.keys(val as Record<string, unknown>)
+        .sort()
+        .reduce<Record<string, unknown>>((sorted, key) => {
+          sorted[key] = (val as Record<string, unknown>)[key];
+          return sorted;
+        }, {});
+    }
+    return val;
+  });
 
 const hasItems = (collection?: CollectionLike | null) => {
   if (!collection) {
