@@ -1,8 +1,6 @@
 import { DocumentNode } from "graphql";
 import {
-  WatchQueryFetchPolicy,
   OperationVariables,
-  Observable,
   FetchResult,
   ErrorPolicy,
   InMemoryCache,
@@ -11,15 +9,24 @@ import {
   InternalRefetchQueriesInclude,
   OnQueryUpdated,
   MutationOptions,
-  ApolloQueryResult,
 } from "@apollo/client";
-import { CacheWriteBehavior, QueryInfo } from "@apollo/client/core/QueryInfo";
+import type {
+  ApolloCacheDiff,
+  ApolloObservableQueryWithInternals,
+  ApolloQueryInfoWithInternals,
+  ApolloQueryManagerWithInternals,
+  FetchConcastWithInfo,
+  FetchConcastWithInfoParams,
+  FetchConcastWithInfoResult,
+  FetchQueryByPolicyParams,
+  FetchQueryObservable,
+  FetchQueryObservableOptions,
+  FetchQueryObservableParams,
+  GetObservableFromLinkArgs,
+  GetResultsFromLinkArgs,
+} from "../apollo-client-internals";
 
-export interface IDiff {
-  result: unknown;
-  missing: IMissing[];
-  complete: boolean;
-}
+export type IDiff = ApolloCacheDiff;
 
 export interface IMissing {
   message: string;
@@ -31,28 +38,9 @@ export interface IApolloClient {
   mutate: () => void;
   watchQuery: () => void;
 }
-export interface IQueryManager {
-  queries: Map<string, IQueryInfo>;
-  getObservableFromLink: (
-    ...args: IGetObservableFromLinkArgs
-  ) => Observable<unknown>;
-  inFlightLinkObservables: Map<
-    DocumentNode,
-    Map<string, Observable<FetchResult>>
-  >;
-  fetchQueryObservable: IFetchQueryObservable;
-  getQuery: (queryId: number) => unknown;
-  fetchQueryByPolicy: (...args: IFetchQueryByPolicy) => unknown;
-  markMutationResult: (...args: IMarkMutationResultArgs) => unknown;
-  markMutationOptimistic: (...args: IMarkMutationOptimisticArgs) => unknown;
-  defaultOptions: IQueryManagerDefaultOptions;
-  broadcastQueries: () => void;
-  getResultsFromLink: (
-    ...args: IGetResultsFromLinkArgs
-  ) => Observable<ApolloQueryResult<any>>;
-}
+export type IQueryManager = ApolloQueryManagerWithInternals;
 
-export type IGetResultsFromLinkArgs = [QueryInfo, CacheWriteBehavior, any];
+export type IGetResultsFromLinkArgs = GetResultsFromLinkArgs;
 
 export type IMarkMutationOptimisticArgs = [unknown, IMutationOperation];
 
@@ -78,11 +66,7 @@ export interface IMutationOperation {
   operationId: number;
 }
 
-export interface IQueryManagerDefaultOptions {
-  mutate?: {
-    fetchPolicy: MutationFetchPolicy;
-  };
-}
+export type IQueryManagerDefaultOptions = IQueryManager["defaultOptions"];
 export type MutationFetchPolicy = Extract<
   FetchPolicy,
   "network-only" | "no-cache"
@@ -98,55 +82,31 @@ export type IMutationResult = IMutationOperation & {
   result: FetchResult<any>;
 };
 
-export type IGetObservableFromLinkArgs = [
-  DocumentNode,
-  { queryDeduplication: boolean },
-  OperationVariables,
-  boolean,
-];
+export type IGetObservableFromLinkArgs = GetObservableFromLinkArgs;
 
-export type IFetchQueryObservable = (
-  ...args: IFetchQueryObservableParams
-) => Observable<unknown>;
+export type IFetchQueryObservable = FetchQueryObservable;
 
-export type IFetchQueryByPolicy = [IQueryInfo, IFetchQueryByPolicyOptions];
+export type IFetchConcastWithInfo = FetchConcastWithInfo;
 
-export type IFetchQueryObservableParams = [
-  number,
-  IFetchQueryObservableOptions,
-];
+export type IFetchConcastWithInfoParams = FetchConcastWithInfoParams;
 
-export interface IFetchQueryByPolicyOptions {
-  fetchPolicy: WatchQueryFetchPolicy;
-  variables: OperationVariables | undefined;
-}
+export type IFetchConcastWithInfoResult = FetchConcastWithInfoResult;
 
-export interface IQueryInfo {
-  observableQuery?: IObservableQuery;
-  getDiff: (variables: OperationVariables | undefined) => IDiff;
-  document: DocumentNode;
-  shouldNotify: () => boolean;
-}
+export type IFetchQueryByPolicy = FetchQueryByPolicyParams;
 
-export interface IObservableQuery {
-  queryId: number;
-  reportResult: (...args: IObservableQueryReportResult) => void;
-}
+export type IFetchQueryObservableParams = FetchQueryObservableParams;
 
-export type IObservableQueryReportResult = [any, any];
+export type IFetchQueryByPolicyOptions = FetchQueryByPolicyParams[1];
 
-export interface IFetchQueryObservableOptions {
-  errorPolicy: ErrorPolicy;
-  fetchPolicy: WatchQueryFetchPolicy;
-  query: DocumentNode;
-  variables: OperationVariables | undefined;
-}
+export type IQueryInfo = ApolloQueryInfoWithInternals;
 
-export interface IQueryInfo {
-  document: DocumentNode;
-  dirty: boolean;
-  markResult: () => void;
-}
+export type IObservableQuery = ApolloObservableQueryWithInternals;
+
+export type IObservableQueryReportResult = Parameters<
+  ApolloObservableQueryWithInternals["reportResult"]
+>;
+
+export type IFetchQueryObservableOptions = FetchQueryObservableOptions;
 
 export interface IApolloClientCache {
   broadcastWatches: (...args: IBroadcastWatches) => void;

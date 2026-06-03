@@ -6,12 +6,15 @@ import {
 import {
   IInspectorTrackingConfig,
   IApolloInspectorState,
-  IApolloClient,
   BaseOperation,
   ICache,
   NameNotFound,
 } from "./interfaces";
-import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
+import type { ApolloClient, NormalizedCacheObject } from "@apollo/client";
+import {
+  getApolloQueryManager,
+  shouldNotifyQueryInfo,
+} from "./apollo-client-internals";
 
 export const getOperationName = (query: DocumentNode) => {
   const definition =
@@ -63,11 +66,10 @@ export const resumeOperation = (
 export const getAffectedQueries = (
   client: ApolloClient<NormalizedCacheObject>
 ) => {
-  const watchQueries = (client as unknown as IApolloClient).queryManager
-    .queries;
+  const watchQueries = getApolloQueryManager(client).queries;
   const affectedQueries = [];
   for (const [_key, value] of watchQueries) {
-    if (value.shouldNotify()) {
+    if (value.document && shouldNotifyQueryInfo(value)) {
       affectedQueries.push(value.document);
     }
   }

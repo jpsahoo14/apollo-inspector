@@ -1,21 +1,20 @@
 import {
-  ApolloClient,
-  DocumentNode,
-  NormalizedCacheObject,
   Observable,
-  OperationVariables,
   Observer,
 } from "@apollo/client";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
-  IApolloClient,
-  IQueryManager,
   QueryOperation,
   IVerboseOperationMap,
-  IGetObservableFromLinkArgs,
   IApolloClientObject,
 } from "../../../interfaces";
+import {
+  GetObservableFromLinkArgs,
+  getApolloQueryManager,
+  getDocumentInfo,
+  hasInFlightLinkObservable,
+} from "../../../apollo-client-internals";
 
 interface IError {
   operationId: number;
@@ -44,48 +43,49 @@ export const overrideGetObservableFromLink = (
   const apolloClient = clientObj.client;
   const map: { [key: string]: boolean } = {};
 
-  const originalGetObservableFromLink = (
-    apolloClient as unknown as IApolloClient
-  ).queryManager.getObservableFromLink;
+  const queryManager = getApolloQueryManager(apolloClient);
+  const originalGetObservableFromLink = queryManager.getObservableFromLink;
 
-  (
-    apolloClient as unknown as IApolloClient
-  ).queryManager.getObservableFromLink = function override(
-    ...args: IGetObservableFromLinkArgs
+  queryManager.getObservableFromLink = function override(
+    ...args: GetObservableFromLinkArgs
   ) {
-    const [query, context, variables, deduplicationValue] = args;
+    const [
+      query,
+      context,
+      variables,
+      extensionsOrDeduplication,
+      deduplicationValue
+    ] = args;
 
     const deduplication =
-      (deduplicationValue || context?.queryDeduplication) ??
+      (typeof deduplicationValue === "boolean"
+        ? deduplicationValue
+        : typeof extensionsOrDeduplication === "boolean"
+        ? extensionsOrDeduplication
+        : context?.queryDeduplication) ??
       this.queryDeduplication;
 
     const operationId = rawData.currentOperationId;
     debug(rawData, operationId, map);
 
-    const {
-      serverQuery,
-      clientQuery,
-    }: {
-      serverQuery: DocumentNode | undefined;
-      clientQuery: DocumentNode | undefined;
-    } = this.transform(query);
+    const { serverQuery, clientQuery } = getDocumentInfo(this, query);
 
     rawData.enableDebug &&
       console.log(
         `APD operationId:${operationId} getObservableFromLink serverQuery:${!!serverQuery} clientQuery:${!!clientQuery}`
       );
 
-    const piggyBackOnExistingObservable = hasPiggyBackOnExistingObservable({
-      queryManager: this,
+    const piggyBackOnExistingObservable = hasInFlightLinkObservable(
+      this,
       serverQuery,
-      variables,
-    });
+      variables
+    );
 
     setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
       const op = opMap.get(operationId) as QueryOperation | undefined;
       if (op) {
-        op.serverQuery = serverQuery;
-        op.clientQuery = clientQuery;
+        op.serverQuery = serverQuery || undefined;
+        op.clientQuery = clientQuery || undefined;
         op.deduplication = deduplication;
         op.piggyBackOnExistingObservable = piggyBackOnExistingObservable;
       }
@@ -137,36 +137,10 @@ export const overrideGetObservableFromLink = (
   };
 
   return () => {
-    (
-      apolloClient as unknown as IApolloClient
-    ).queryManager.getObservableFromLink = originalGetObservableFromLink;
+    queryManager.getObservableFromLink = originalGetObservableFromLink;
   };
 };
 
-interface IPiggyBackOnExistingObservable {
-  queryManager: IQueryManager;
-  serverQuery: DocumentNode | undefined;
-  variables: OperationVariables;
-}
-
-const hasPiggyBackOnExistingObservable = ({
-  queryManager,
-  serverQuery,
-  variables,
-}: IPiggyBackOnExistingObservable): boolean => {
-  if (serverQuery) {
-    const byVariables = queryManager.inFlightLinkObservables.get(serverQuery);
-    if (byVariables) {
-      const varJson = JSON.stringify(variables);
-      const observable = byVariables.get(varJson);
-      if (observable) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-};
 function debug(
   rawDataRef: IApolloInspectorState,
   operationId: number,

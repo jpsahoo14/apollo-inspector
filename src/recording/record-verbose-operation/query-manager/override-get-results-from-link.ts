@@ -1,21 +1,15 @@
-import {
-  NormalizedCacheObject,
-  ErrorPolicy,
-  Observable,
-  ApolloClient,
-} from "@apollo/client";
 import { getAffectedQueries } from "../../../apollo-inspector-utils";
 import {
   ISetVerboseApolloOperations,
   IApolloInspectorState,
-  IApolloClient,
-  IFetchQueryObservableParams,
   QueryOperation,
   IVerboseOperationMap,
-  getBaseOperationConstructorExtraParams,
-  IGetResultsFromLinkArgs,
   IApolloClientObject,
 } from "../../../interfaces";
+import {
+  getApolloQueryManager,
+  GetResultsFromLinkArgs,
+} from "../../../apollo-client-internals";
 
 export const overrideGetResultsFromLink = (
   clientObj: IApolloClientObject,
@@ -23,40 +17,40 @@ export const overrideGetResultsFromLink = (
   setVerboseApolloOperations: ISetVerboseApolloOperations
 ) => {
   const apolloClient = clientObj.client;
-  const originalgetResultsFromLink = (apolloClient as unknown as IApolloClient)
-    .queryManager.getResultsFromLink;
+  const queryManager = getApolloQueryManager(apolloClient);
+  const originalGetResultsFromLink = queryManager.getResultsFromLink;
   const cleanUps: (() => void)[] = [];
-  (apolloClient as unknown as IApolloClient).queryManager.getResultsFromLink =
-    function override(...args: IGetResultsFromLinkArgs) {
-      const operationId = rawData.currentOperationId;
 
-      const observable = originalgetResultsFromLink.apply(this, args);
+  queryManager.getResultsFromLink = function override(
+    ...args: GetResultsFromLinkArgs
+  ) {
+    const operationId = rawData.currentOperationId;
+    const observable = originalGetResultsFromLink.apply(this, args);
 
-      const subscription = observable.subscribe({
-        next: () => {
-          setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
-            const operation = opMap.get(operationId);
-            const affectedQueries = getAffectedQueries(apolloClient);
-            operation?.addAffectedQueries(affectedQueries);
-            return operation;
-          });
-        },
-        error: () => {
-          subscription.unsubscribe();
-        },
-        complete: () => {
-          subscription.unsubscribe();
-        },
-      });
+    const subscription = observable.subscribe({
+      next: () => {
+        setVerboseApolloOperations((opMap: IVerboseOperationMap) => {
+          const operation = opMap.get(operationId) as QueryOperation | undefined;
+          const affectedQueries = getAffectedQueries(apolloClient);
+          operation?.addAffectedQueries(affectedQueries);
+          return operation;
+        });
+      },
+      error: () => {
+        subscription.unsubscribe();
+      },
+      complete: () => {
+        subscription.unsubscribe();
+      },
+    });
 
-      cleanUps.push(() => subscription.unsubscribe());
+    cleanUps.push(() => subscription.unsubscribe());
 
-      return observable;
-    };
+    return observable;
+  };
 
   return () => {
-    (apolloClient as unknown as IApolloClient).queryManager.getResultsFromLink =
-      originalgetResultsFromLink;
+    queryManager.getResultsFromLink = originalGetResultsFromLink;
     cleanUps.forEach((cleanup) => cleanup());
   };
 };
